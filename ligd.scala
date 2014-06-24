@@ -38,9 +38,8 @@ object LIGD {
     case (RSum(_, _), _, _)               ⇒ false
     case (RProd(ra, rb), Prod(a1, b1), Prod(a2, b2)) ⇒
       geq(ra, a1, a2) && geq(rb, b1, b2)
-    // FIXME: The [Any] is wrong, but makes it compile.
-    case (RType(r: Rep[Any], ep: EP[A, Any]), t1, t2) ⇒ geq[Any](r, ep.from(t1), ep.from(t2))
-    case _ ⇒ false
+    case (r: RType[_, A], t1, t2) ⇒ geq(r.a, r.b.from(t1), r.b.from(t2))
+    case _                        ⇒ false
 
   }
 
