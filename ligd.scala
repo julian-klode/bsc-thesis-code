@@ -109,10 +109,9 @@ object LIGD {
     case Inr(Prod(a, as)) ⇒ a :: as
   }
 
-  // TODO: This requires a type annotation for the EP, why?<
   def rList[A](ra: ⇒ Rep[A]): Rep[List[A]] = RType(
     RSum(RUnit, RProd(ra, rList(ra))),
-    EP(fromList, toList): EP[List[A], Sum[Unit, Prod[A, List[A]]]]
+    EP(fromList[A], toList[A])
   )
 }
 
