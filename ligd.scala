@@ -32,20 +32,20 @@ import org.scalatest._
 object LIGD {
 
   def geq[A](rep: Rep[A], a: A, b: A): Boolean = (rep, a, b) match {
-    case (RUnit, Unit(), Unit())          ⇒ true
+    case (RUnit, Unit, Unit)              ⇒ true
     case (RSum(ra, rb), Inl(a1), Inl(a2)) ⇒ geq(ra, a1, a2)
     case (RSum(ra, rb), Inr(b1), Inr(b2)) ⇒ geq(rb, b1, b2)
     case (RSum(_, _), _, _)               ⇒ false
     case (RProd(ra, rb), Prod(a1, b1), Prod(a2, b2)) ⇒
       geq(ra, a1, a2) && geq(rb, b1, b2)
-    // FIXME: The [Any] is wrong, but makes it compile.
-    case (RType(r: Rep[Any], ep: EP[A, Any]), t1, t2) ⇒ geq[Any](r, ep.from(t1), ep.from(t2))
-    case _ ⇒ false
+    case (r: RType[_, A], t1, t2) ⇒ geq(r.a, r.b.from(t1), r.b.from(t2))
+    case _                        ⇒ false
 
   }
 
   // Units, sums and products
-  case class Unit // FIXME: Should be object, but fails below
+  type Unit = Unit.type
+  case object Unit
   sealed abstract class Sum[A, B]
   sealed case class Inl[A, B](val a: A) extends Sum[A, B]
   sealed case class Inr[A, B](val b: B) extends Sum[A, B]
@@ -59,7 +59,6 @@ object LIGD {
    */
   sealed abstract class Rep[+T]
 
-  /** Unit. Hey, we can use a case object here! */
   case object RUnit extends Rep[Unit]
 
   /** Represent sums */
@@ -100,20 +99,18 @@ object LIGD {
    * ====================================================================
    */
   def fromList[A](list: List[A]): Sum[Unit, Prod[A, List[A]]] = list match {
-    case Nil       ⇒ Inl(Unit())
+    case Nil       ⇒ Inl(Unit)
     case (a :: as) ⇒ Inr(Prod(a, as))
   }
 
   def toList[A](list: Sum[Unit, Prod[A, List[A]]]): List[A] = list match {
-    // FIXME: If Unit is a case object, this will fail
-    case Inl(Unit())      ⇒ List.empty
+    case Inl(Unit)        ⇒ List.empty
     case Inr(Prod(a, as)) ⇒ a :: as
   }
 
-  // TODO: This requires a type annotation for the EP, why?<
   def rList[A](ra: ⇒ Rep[A]): Rep[List[A]] = RType(
     RSum(RUnit, RProd(ra, rList(ra))),
-    EP(fromList, toList): EP[List[A], Sum[Unit, Prod[A, List[A]]]]
+    EP(fromList[A], toList[A])
   )
 }
 
@@ -122,7 +119,7 @@ object LIGD {
 class LIGDTests extends FlatSpec {
   import LIGD._
   "geq" should "work" in {
-    assert(geq(RUnit, Unit(), Unit()))
+    assert(geq(RUnit, Unit, Unit))
   }
 
   "geq" should "support empty lists" in {
