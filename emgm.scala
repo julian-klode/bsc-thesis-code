@@ -34,12 +34,12 @@ object EMGM {
     */
   trait Generic[G[_]] {
     def unit: G[Unit]
-    def plus[A, B](a: G[A], b: G[B]): G[Either[A, B]]
-    def prod[A, B](a: G[A], b: G[B]): G[(A, B)]
-    def constr[A](name: Symbol, arity: Int, arg: G[A]): G[A] = arg
+    def plus[A, B]: G[A] ⇒ G[B] ⇒ G[Either[A, B]]
+    def prod[A, B]: G[A] ⇒ G[B] ⇒ G[(A, B)]
+    def constr[A]: Symbol ⇒ Int ⇒ G[A] ⇒ G[A] = (name ⇒ arity ⇒ arg ⇒ arg)
     def char: G[Char]
     def int: G[Int]
-    def view[A, B](iso: Iso[B, A], a: ⇒ G[A]): G[B]
+    def view[A, B]: Iso[B, A] ⇒ (⇒ G[A]) ⇒ G[B]
   }
 
   /** Representation of types.
@@ -66,10 +66,10 @@ object EMGM {
     * implementing the Rep, which failed :(
     */
   implicit def REither[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
-    override def rep[G[_]](g: Generic[G]): G[Either[A, B]] = g.plus(a.rep(g), b.rep(g))
+    override def rep[G[_]](g: Generic[G]): G[Either[A, B]] = g.plus(a.rep(g))(b.rep(g))
   }
   implicit def RTuple2[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[(A, B)] {
-    override def rep[G[_]](g: Generic[G]): G[(A, B)] = g.prod(a.rep(g), b.rep(g))
+    override def rep[G[_]](g: Generic[G]): G[(A, B)] = g.prod(a.rep(g))(b.rep(g))
   }
 
   object Examples {
@@ -81,15 +81,15 @@ object EMGM {
     def const[A, B](a: A)(b: B) = a
     case class Encode[A](encodeS: A ⇒ List[Boolean]) extends Generic[Encode] {
       override def unit = Encode(const(List()))
-      override def plus[A, B](a: Encode[A], b: Encode[B]) = Encode((x: Either[A, B]) ⇒ x match {
+      override def plus[A, B] = a ⇒ b ⇒ Encode(_ match {
         case Left(l)  ⇒ false :: a.encodeS(l)
         case Right(r) ⇒ true :: b.encodeS(r)
       })
-      override def prod[A, B](a: Encode[A], b: Encode[B]) = Encode((x: (A, B)) ⇒ a.encodeS(x._1) ++ b.encodeS(x._2))
+      override def prod[A, B] = a ⇒ b ⇒ Encode(x ⇒ a.encodeS(x._1) ++ b.encodeS(x._2))
 
       override def char = Encode(encodeChar)
       override def int = Encode(encodeInt)
-      override def view[A, B](iso: Iso[B, A], a: ⇒ Encode[A]) = Encode((x: B) ⇒ a.encodeS(iso.from(x)))
+      override def view[A, B] = iso ⇒ a ⇒ Encode(x ⇒ a.encodeS(iso.from(x)))
     }
     val encodeG = Encode(const(List()))
 
@@ -117,7 +117,7 @@ object EMGM {
 
     def rList[G[_], A](a: G[A])(implicit g: Generic[G]): G[List[A]] = {
       import g._
-      view(isoList, plus(unit, prod(a, rList(a))))
+      view(isoList[A])(plus(unit)(prod(a)(rList(a))))
     }
 
     implicit def RList[A](implicit a: Rep[A]) = new Rep[List[A]] {
