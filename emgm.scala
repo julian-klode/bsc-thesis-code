@@ -48,17 +48,17 @@ object EMGM {
     * for every object A.
     */
   trait Rep[A] {
-    def rep[G[_]](g: Generic[G]): G[A]
+    def rep[G[_]](implicit g: Generic[G]): G[A]
   }
 
   implicit def RUnit = new Rep[Unit] {
-    override def rep[G[_]](g: Generic[G]): G[Unit] = g.unit
+    override def rep[G[_]](implicit g: Generic[G]): G[Unit] = g.unit
   }
   implicit def RChar = new Rep[Char] {
-    override def rep[G[_]](g: Generic[G]): G[Char] = g.char
+    override def rep[G[_]](implicit g: Generic[G]): G[Char] = g.char
   }
   implicit def RInt = new Rep[Int] {
-    override def rep[G[_]](g: Generic[G]): G[Int] = g.int
+    override def rep[G[_]](implicit g: Generic[G]): G[Int] = g.int
   }
 
   /** Thanks to Scala for Generic Programmers :). I did not figure out how to
@@ -66,86 +66,88 @@ object EMGM {
     * implementing the Rep, which failed :(
     */
   implicit def REither[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
-    override def rep[G[_]](g: Generic[G]): G[Either[A, B]] = g.plus(a.rep(g))(b.rep(g))
+    override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
   }
   implicit def RTuple2[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[(A, B)] {
-    override def rep[G[_]](g: Generic[G]): G[(A, B)] = g.prod(a.rep(g))(b.rep(g))
+    override def rep[G[_]](implicit g: Generic[G]): G[(A, B)] = g.prod(a.rep)(b.rep)
   }
 
-  object Examples {
-
-    /* ====================================================================
+  /* ====================================================================
    *          EXAMPLE: Encoding data to bits
    * ====================================================================
    */
-    def const[A, B](a: A)(b: B) = a
-    case class Encode[A](encodeS: A ⇒ List[Boolean]) extends Generic[Encode] {
-      override def unit = Encode(const(List()))
-      override def plus[A, B] = a ⇒ b ⇒ Encode(_ match {
-        case Left(l)  ⇒ false :: a.encodeS(l)
-        case Right(r) ⇒ true :: b.encodeS(r)
-      })
-      override def prod[A, B] = a ⇒ b ⇒ Encode(x ⇒ a.encodeS(x._1) ++ b.encodeS(x._2))
+  def const[A, B](a: A)(b: B) = a
+  case class Encode[A](encodeS: A ⇒ List[Boolean])
 
-      override def char = Encode(encodeChar)
-      override def int = Encode(encodeInt)
-      override def view[A, B] = iso ⇒ a ⇒ Encode(x ⇒ a.encodeS(iso.from(x)))
-    }
-    val encodeG = Encode(const(List()))
+  object MyEncode extends Generic[Encode] {
+    override def unit = Encode(const(List()))
+    override def plus[A, B] = a ⇒ b ⇒ Encode(_ match {
+      case Left(l)  ⇒ false :: a.encodeS(l)
+      case Right(r) ⇒ true :: b.encodeS(r)
+    })
+    override def prod[A, B] = a ⇒ b ⇒ Encode(x ⇒ a.encodeS(x._1) ++ b.encodeS(x._2))
 
-    /* Stubs */
-    def encodeInt(i: Int) = List(true)
-    def encodeChar(c: Char) = List(false)
+    override def char = Encode(encodeChar)
+    override def int = Encode(encodeInt)
+    override def view[A, B] = iso ⇒ a ⇒ Encode(x ⇒ a.encodeS(iso.from(x)))
+  }
 
-    /* Generic function */
-    def encode[T](t: T)(implicit r: Rep[T]): List[Boolean] = r.rep(encodeG).encodeS(t)
+  /* Stubs */
+  def encodeInt(i: Int) = List(true)
+  def encodeChar(c: Char) = List(false)
 
-    /* ====================================================================
+  /* Generic function */
+  def encode[T](t: T)(implicit r: Rep[T]): List[Boolean] = r.rep(MyEncode).encodeS(t)
+
+  /* ====================================================================
    *          EXAMPLE: LISTS
    * ====================================================================
    */
-    def isoList[A]: Iso[List[A], Either[Unit, (A, List[A])]] = Iso(fromList, toList)
-    def fromList[A](list: List[A]): Either[Unit, (A, List[A])] = list match {
-      case Nil       ⇒ Left(Unit)
-      case (a :: as) ⇒ Right((a, as))
-    }
+  def isoList[A]: Iso[List[A], Either[Unit, (A, List[A])]] = Iso(fromList, toList)
+  def fromList[A](list: List[A]): Either[Unit, (A, List[A])] = list match {
+    case Nil       ⇒ Left(Unit)
+    case (a :: as) ⇒ Right((a, as))
+  }
 
-    def toList[A](list: Either[Unit, (A, List[A])]): List[A] = list match {
-      case Left(())       ⇒ List.empty
-      case Right((a, as)) ⇒ a :: as
-    }
+  def toList[A](list: Either[Unit, (A, List[A])]): List[A] = list match {
+    case Left(())       ⇒ List.empty
+    case Right((a, as)) ⇒ a :: as
+  }
 
-    def rList[G[_], A](a: G[A])(implicit g: Generic[G]): G[List[A]] = {
-      import g._
-      view(isoList[A])(plus(unit)(prod(a)(rList(a))))
-    }
+  def rList[G[_], A](a: G[A])(implicit g: Generic[G]): G[List[A]] = {
+    import g._
+    view(isoList[A])(plus(unit)(prod(a)(rList(a))))
+  }
 
-    implicit def RList[A](implicit a: Rep[A]) = new Rep[List[A]] {
-      override def rep[G[_]](gen: Generic[G]) =
-        rList(a.rep(gen))(gen)
-    }
+  implicit def RList[A](implicit a: Rep[A]) = new Rep[List[A]] {
+    override def rep[G[_]](implicit gen: Generic[G]) =
+      rList(a.rep)(gen)
+  }
 
-    /** Sum */
-    /* ====================================================================
-   *          EXAMPLE: Sums
+  /** Function1 */
+  /* ====================================================================
+   *          EXAMPLE: Function1s
    * ====================================================================
    */
 
-    case class Sum[A](encodeS: A ⇒ Int) extends Generic[Sum] {
-      override def unit = Sum(_ => 0)
-      override def plus[A, B] = a ⇒ b ⇒ Sum(_ match {
-        case Left(l)  ⇒ a.encodeS(l)
-        case Right(r) ⇒ b.encodeS(r)
-      })
-      override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.encodeS(x._1) + b.encodeS(x._2))
-
-      override def char = Sum(_ => 0)
-      override def int = Sum((x : Int) => x)
-      override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.encodeS(iso.from(x)))
-    }
-
-    /* Generic function */
-    def sum[T](t: T)(implicit r: Rep[T]): Int= r.rep(Sum(const(0))).encodeS(t)
-
+  case class Sum[A](encodeS: A ⇒ Int)
+  class MySum extends Generic[Sum] {
+    override def unit = Sum(_ ⇒ 0)
+    override def plus[A, B] = a ⇒ b ⇒ Sum(_ match {
+      case Left(l)  ⇒ a.encodeS(l)
+      case Right(r) ⇒ b.encodeS(r)
+    })
+    override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.encodeS(x._1) + b.encodeS(x._2))
+    override def char = Sum(_ ⇒ 0)
+    override def int = Sum((x: Int) ⇒ x)
+    override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.encodeS(iso.from(x)))
   }
+  class MyCountInt extends MySum {
+    override def int = Sum(x ⇒ 1)
+  }
+
+  /* Generic function */
+  def sum[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MySum).encodeS(t)
+  def countInt[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MyCountInt).encodeS(t)
+
 }
