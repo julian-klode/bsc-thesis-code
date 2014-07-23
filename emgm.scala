@@ -23,14 +23,6 @@
   * elements.
   */
 object EMGM {
-
-  // Units, sums and products
-  type Unit = Unit.type
-  case object Unit
-  sealed abstract class Sum[A, B]
-  sealed case class Inl[A, B](val a: A) extends Sum[A, B]
-  sealed case class Inr[A, B](val b: B) extends Sum[A, B]
-  sealed case class Prod[A, B](val a: A, val b: B)
   /** Isomorphism for converting between types */
   sealed case class Iso[B, C](val from: B ⇒ C, val to: C ⇒ B)
 
@@ -40,8 +32,8 @@ object EMGM {
     */
   trait Generic[G[_]] {
     def unit: G[Unit]
-    def plus[A, B](a: G[A], b: G[B]): G[Sum[A, B]]
-    def prod[A, B](a: G[A], b: G[B]): G[Prod[A, B]]
+    def plus[A, B](a: G[A], b: G[B]): G[Either[A, B]]
+    def prod[A, B](a: G[A], b: G[B]): G[(A, B)]
     def constr[A](name: Symbol, arity: Int, arg: G[A]): G[A] = arg
     def char: G[Char]
     def int: G[Int]
@@ -55,11 +47,11 @@ object EMGM {
   def const[A, B](a: A)(b: B) = a
   case class Encode[A](encodeS: A ⇒ List[Boolean]) extends Generic[Encode] {
     override def unit = Encode(const(List()))
-    override def plus[A, B](a: Encode[A], b: Encode[B]) = Encode((x: Sum[A, B]) ⇒ x match {
-      case Inl(l) ⇒ false :: a.encodeS(l)
-      case Inr(r) ⇒ true :: b.encodeS(r)
+    override def plus[A, B](a: Encode[A], b: Encode[B]) = Encode((x: Either[A, B]) ⇒ x match {
+      case Left(l)  ⇒ false :: a.encodeS(l)
+      case Right(r) ⇒ true :: b.encodeS(r)
     })
-    override def prod[A, B](a: Encode[A], b: Encode[B]) = Encode((x: Prod[A, B]) ⇒ a.encodeS(x.a) ++ b.encodeS(x.b))
+    override def prod[A, B](a: Encode[A], b: Encode[B]) = Encode((x: (A, B)) ⇒ a.encodeS(x._1) ++ b.encodeS(x._2))
 
     override def char = Encode(encodeChar)
     override def int = Encode(encodeInt)
@@ -75,22 +67,22 @@ object EMGM {
    *          EXAMPLE: LISTS
    * ====================================================================
    */
-  def isoList[A]: Iso[List[A], Sum[Unit, Prod[A, List[A]]]] = Iso(fromList, toList)
-  def fromList[A](list: List[A]): Sum[Unit, Prod[A, List[A]]] = list match {
-    case Nil       ⇒ Inl(Unit)
-    case (a :: as) ⇒ Inr(Prod(a, as))
+  def isoList[A]: Iso[List[A], Either[Unit, (A, List[A])]] = Iso(fromList, toList)
+  def fromList[A](list: List[A]): Either[Unit, (A, List[A])] = list match {
+    case Nil       ⇒ Left(Unit)
+    case (a :: as) ⇒ Right((a, as))
   }
 
-  def toList[A](list: Sum[Unit, Prod[A, List[A]]]): List[A] = list match {
-    case Inl(Unit)        ⇒ List.empty
-    case Inr(Prod(a, as)) ⇒ a :: as
+  def toList[A](list: Either[Unit, (A, List[A])]): List[A] = list match {
+    case Left(())       ⇒ List.empty
+    case Right((a, as)) ⇒ a :: as
   }
 
   def rList[G[_], A, B](g: Generic[G])(a: G[A]): G[List[A]] = g.view(isoList, g.plus(g.unit, g.prod(a, rList(g)(a))))
 
   /** It seems we need to translate Rep like this, but:
     *
-    * We cannot implement Product or Sums this way as we do not have access
+    * We cannot implement uct or Eithers this way as we do not have access
     * to the Reps of the left and right sides.
     */
   trait Rep[A] {
@@ -100,7 +92,7 @@ object EMGM {
   /** Let's try implementing Rep like this:
     *
     * Does not work either. While we can implement the product case now,
-    * there's no way for us to implement Sum, because we can only access
+    * there's no way for us to implement Either, because we can only access
     * either the left or the right side, and thus, only their representations.
     */
   trait Rep1 {
@@ -121,12 +113,12 @@ object EMGM {
    * We'd need to access a Rep[A] and a Rep[B] for this to work. How are
    * we going to do this?
    *
-  case class RSum[A, B]() extends Rep[Sum[A, B]] {
-    override def rep[G[_]](g: Generic[G]): G[Sum[A, B]] = g.plus(rep(g): G[A], rep(g): G[B])
+  case class REither[A, B]() extends Rep[Either[A, B]] {
+    override def rep[G[_]](g: Generic[G]): G[Either[A, B]] = g.plus(rep(g): G[A], rep(g): G[B])
   }
   */
   def encode[T](t: T)(implicit r: Rep[T]): List[Boolean] = r.rep(encodeG).encodeS(t)
 
-  val b = encodeG.prod(encodeG.int, encodeG.char).encodeS(Prod(1, 'x'))
+  val b = encodeG.prod(encodeG.int, encodeG.char).encodeS((1, 'x'))
 
 }
