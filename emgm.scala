@@ -124,5 +124,28 @@ object EMGM {
       override def rep[G[_]](gen: Generic[G]) =
         rList(a.rep(gen))(gen)
     }
+
+    /** Sum */
+    /* ====================================================================
+   *          EXAMPLE: Sums
+   * ====================================================================
+   */
+
+    case class Sum[A](encodeS: A ⇒ Int) extends Generic[Sum] {
+      override def unit = Sum(_ => 0)
+      override def plus[A, B] = a ⇒ b ⇒ Sum(_ match {
+        case Left(l)  ⇒ a.encodeS(l)
+        case Right(r) ⇒ b.encodeS(r)
+      })
+      override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.encodeS(x._1) + b.encodeS(x._2))
+
+      override def char = Sum(_ => 0)
+      override def int = Sum((x : Int) => x)
+      override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.encodeS(iso.from(x)))
+    }
+
+    /* Generic function */
+    def sum[T](t: T)(implicit r: Rep[T]): Int= r.rep(Sum(const(0))).encodeS(t)
+
   }
 }
