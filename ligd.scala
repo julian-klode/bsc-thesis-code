@@ -32,24 +32,16 @@ import org.scalatest._
 object LIGD {
 
   def geq[A](rep: Rep[A], a: A, b: A): Boolean = (rep, a, b) match {
-    case (RUnit, Unit, Unit)              ⇒ true
-    case (RSum(ra, rb), Inl(a1), Inl(a2)) ⇒ geq(ra, a1, a2)
-    case (RSum(ra, rb), Inr(b1), Inr(b2)) ⇒ geq(rb, b1, b2)
-    case (RSum(_, _), _, _)               ⇒ false
-    case (RProd(ra, rb), Prod(a1, b1), Prod(a2, b2)) ⇒
+    case (RUnit, (), ())                      ⇒ true
+    case (RSum(ra, rb), Left(a1), Left(a2))   ⇒ geq(ra, a1, a2)
+    case (RSum(ra, rb), Right(b1), Right(b2)) ⇒ geq(rb, b1, b2)
+    case (RSum(_, _), _, _)                   ⇒ false
+    case (RProd(ra, rb), (a1, b1), (a2, b2)) ⇒
       geq(ra, a1, a2) && geq(rb, b1, b2)
     case (r: RType[_, A], t1, t2) ⇒ geq(r.a, r.b.from(t1), r.b.from(t2))
     case _                        ⇒ false
 
   }
-
-  // Units, sums and products
-  type Unit = Unit.type
-  case object Unit
-  sealed abstract class Sum[A, B]
-  sealed case class Inl[A, B](val a: A) extends Sum[A, B]
-  sealed case class Inr[A, B](val b: B) extends Sum[A, B]
-  sealed case class Prod[A, B](val a: A, val b: B)
 
   /* Representation of types as GADTS.
    *
@@ -62,8 +54,8 @@ object LIGD {
   case object RUnit extends Rep[Unit]
 
   /** Represent sums */
-  case class RSum[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Sum[A, B]]
-  case class RProd[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Prod[A, B]]
+  case class RSum[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Either[A, B]]
+  case class RProd[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[(A, B)]
 
   /** Represent any type */
   sealed class RType[C, B](c: ⇒ Rep[C], ep: EP[B, C]) extends Rep[B] {
@@ -82,14 +74,14 @@ object LIGD {
    *          EXAMPLE: LISTS
    * ====================================================================
    */
-  def fromList[A](list: List[A]): Sum[Unit, Prod[A, List[A]]] = list match {
-    case Nil       ⇒ Inl(Unit)
-    case (a :: as) ⇒ Inr(Prod(a, as))
+  def fromList[A](list: List[A]): Either[Unit, (A, List[A])] = list match {
+    case Nil       ⇒ Left(())
+    case (a :: as) ⇒ Right((a, as))
   }
 
-  def toList[A](list: Sum[Unit, Prod[A, List[A]]]): List[A] = list match {
-    case Inl(Unit)        ⇒ List.empty
-    case Inr(Prod(a, as)) ⇒ a :: as
+  def toList[A](list: Either[Unit, (A, List[A])]): List[A] = list match {
+    case Left(())       ⇒ List.empty
+    case Right((a, as)) ⇒ a :: as
   }
 
   def rList[A](ra: ⇒ Rep[A]): Rep[List[A]] = RType(
@@ -103,7 +95,7 @@ object LIGD {
 class LIGDTests extends FlatSpec {
   import LIGD._
   "geq" should "work" in {
-    assert(geq(RUnit, Unit, Unit))
+    assert(geq(RUnit, (), ()))
   }
 
   "geq" should "support empty lists" in {
