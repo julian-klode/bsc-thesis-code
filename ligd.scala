@@ -131,4 +131,14 @@ class LIGDTests extends FlatSpec {
     assert(geq("42", "42"))
     assert(!geq("42", "7"))
   }
+  "geq" should "support heterogeneous pairs" in {
+    assert(geq(("42", 7), ("42", 7)))
+    assert(!geq(("42", 7), ("7", 7)))
+    assert(!geq(("42", 7), ("42", 42)))
+  }
+  "geq" should "support homogeneous pairs" in {
+    assert(geq(("42", "7"), ("42", "7")))
+    assert(!geq(("42", "7"), ("7", "7")))
+    assert(!geq(("42", "7"), ("42", "42")))
+  }
 }
