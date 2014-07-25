@@ -41,6 +41,7 @@ object EMGM {
     def constr[A]: Symbol ⇒ Int ⇒ G[A] ⇒ G[A] = (name ⇒ arity ⇒ arg ⇒ arg)
     def char: G[Char]
     def int: G[Int]
+    def string: G[String]
     def view[A, B]: Iso[B, A] ⇒ (⇒ G[A]) ⇒ G[B]
   }
 
@@ -53,6 +54,9 @@ object EMGM {
     def rep[G[_]](implicit g: Generic[G]): G[A]
   }
 
+  implicit def RString = new Rep[String] {
+    override def rep[G[_]](implicit g: Generic[G]): G[String] = g.string
+  }
   implicit def RUnit = new Rep[Unit] {
     override def rep[G[_]](implicit g: Generic[G]): G[Unit] = g.unit
   }
@@ -91,12 +95,14 @@ object EMGM {
 
     override def char = Encode(encodeChar)
     override def int = Encode(encodeInt)
+    override def string = Encode(encodeString)
     override def view[A, B] = iso ⇒ a ⇒ Encode(x ⇒ a.encodeS(iso.from(x)))
   }
 
   /* Stubs */
   def encodeInt(i: Int) = List(true)
   def encodeChar(c: Char) = List(false)
+  def encodeString(c: String) = List(false)
 
   /* Generic function */
   def encode[T](t: T)(implicit r: Rep[T]): List[Boolean] = r.rep(MyEncode).encodeS(t)
@@ -142,6 +148,7 @@ object EMGM {
     override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.encodeS(x._1) + b.encodeS(x._2))
     override def char = Sum(_ ⇒ 0)
     override def int = Sum((x: Int) ⇒ x)
+    override def string = Sum(_ ⇒ 0)
     override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.encodeS(iso.from(x)))
   }
   class MyCountInt extends MySum {
@@ -170,6 +177,7 @@ object EMGM {
     )
     override def char = GEq(x ⇒ y ⇒ x == y)
     override def int = GEq(x ⇒ y ⇒ x == y)
+    override def string = GEq(x ⇒ y ⇒ x == y)
     override def view[A, B] = iso ⇒ a ⇒ GEq(x ⇒ y ⇒ a.equals(iso.from(x))(iso.from(y)))
   }
 
@@ -201,5 +209,9 @@ class EMGMTests extends FlatSpec {
   "geq" should "support chars" in {
     assert(geq('4', '4'))
     assert(!geq('4', '2'))
+  }
+  "geq" should "support strings" in {
+    assert(geq("42", "42"))
+    assert(!geq("42", "7"))
   }
 }

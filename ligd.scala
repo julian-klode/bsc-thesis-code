@@ -35,6 +35,7 @@ object LIGD {
     case (RUnit, (), ())                      ⇒ true
     case (RInt, a, b)                         ⇒ a == b
     case (RChar, a, b)                        ⇒ a == b
+    case (RString, a, b)                      ⇒ a == b
     case (RSum(ra, rb), Left(a1), Left(a2))   ⇒ geq(a1, a2)(ra)
     case (RSum(ra, rb), Right(b1), Right(b2)) ⇒ geq(b1, b2)(rb)
     case (RSum(_, _), _, _)                   ⇒ false
@@ -56,6 +57,7 @@ object LIGD {
   implicit case object RUnit extends Rep[Unit]
   implicit case object RInt extends Rep[Int]
   implicit case object RChar extends Rep[Char]
+  implicit case object RString extends Rep[String]
 
   /** Represent sums */
   case class RSum[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Either[A, B]]
@@ -125,5 +127,8 @@ class LIGDTests extends FlatSpec {
     assert(geq('4', '4'))
     assert(!geq('4', '2'))
   }
-
+  "geq" should "support strings" in {
+    assert(geq("42", "42"))
+    assert(!geq("42", "7"))
+  }
 }
