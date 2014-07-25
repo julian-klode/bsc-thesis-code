@@ -33,6 +33,8 @@ object LIGD {
 
   def geq[A](a: A, b: A)(implicit rep: Rep[A]): Boolean = (rep, a, b) match {
     case (RUnit, (), ())                      ⇒ true
+    case (RInt, a, b)                         ⇒ a == b
+    case (RChar, a, b)                        ⇒ a == b
     case (RSum(ra, rb), Left(a1), Left(a2))   ⇒ geq(a1, a2)(ra)
     case (RSum(ra, rb), Right(b1), Right(b2)) ⇒ geq(b1, b2)(rb)
     case (RSum(_, _), _, _)                   ⇒ false
@@ -52,6 +54,8 @@ object LIGD {
   sealed abstract class Rep[+T]
 
   implicit case object RUnit extends Rep[Unit]
+  implicit case object RInt extends Rep[Int]
+  implicit case object RChar extends Rep[Char]
 
   /** Represent sums */
   case class RSum[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Either[A, B]]
@@ -102,15 +106,24 @@ class LIGDTests extends FlatSpec {
     assert(geq(unit, unit))
   }
 
-
   "geq" should "support empty lists" in {
-    assert(geq(List.empty : List[Unit], List.empty))
+    assert(geq(List.empty: List[Unit], List.empty))
   }
 
   "geq" should "support non-empty lists" in {
+    assert(geq(List(1, 2, 3), List(1, 2, 3)))
+    assert(!geq(List(1, 2, 3), List(1, 2, 4)))
     assert(geq(List(unit, unit), List(unit, unit)))
     assert(!geq(List(unit), List(unit, unit)))
   }
 
+  "geq" should "support numbers" in {
+    assert(geq(42, 42))
+    assert(!geq(42, 7))
+  }
+  "geq" should "support chars" in {
+    assert(geq('4', '4'))
+    assert(!geq('4', '2'))
+  }
 
 }
