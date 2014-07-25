@@ -62,32 +62,16 @@ object LIGD {
   case object RUnit extends Rep[Unit]
 
   /** Represent sums */
-  sealed class RSum[A, B](ax: ⇒ Rep[A], bx: ⇒ Rep[B]) extends Rep[Sum[A, B]] {
-    lazy val a = ax
-    lazy val b = bx
-  }
-  object RSum {
-    def apply[A, B](a: ⇒ Rep[A], b: ⇒ Rep[B]): RSum[A, B] = new RSum(a, b)
-    def unapply[A, B](sum: RSum[A, B]) = Some(sum.a, sum.b)
-  }
-
-  /** Represent products */
-  sealed class RProd[A, B](ax: ⇒ Rep[A], bx: ⇒ Rep[B]) extends Rep[Prod[A, B]] {
-    lazy val a = ax
-    lazy val b = bx
-  }
-  object RProd {
-    def apply[A, B](a: ⇒ Rep[A], b: ⇒ Rep[B]): RProd[A, B] = new RProd(a, b)
-    def unapply[A, B](sum: RProd[A, B]) = Some(sum.a, sum.b)
-  }
+  case class RSum[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Sum[A, B]]
+  case class RProd[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Prod[A, B]]
 
   /** Represent any type */
-  sealed class RType[C, B](c: ⇒ Rep[C], ep: ⇒ EP[B, C]) extends Rep[B] {
+  sealed class RType[C, B](c: ⇒ Rep[C], ep: EP[B, C]) extends Rep[B] {
     lazy val a = c
     lazy val b = ep
   }
   object RType {
-    def apply[C, B](a: ⇒ Rep[C], b: ⇒ EP[B, C]): RType[C, B] = new RType(a, b)
+    def apply[C, B](a: ⇒ Rep[C], b: EP[B, C]): RType[C, B] = new RType(a, b)
     def unapply[C, B](sum: RType[C, B]) = Some(sum.a, sum.b)
   }
 
