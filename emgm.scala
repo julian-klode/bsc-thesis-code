@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+import org.scalatest._
+
 /** Implementation of (Extensible and Modular) Generics for the Masses
   *
   * Based on: Extensible and Modular Generics for the Masses
@@ -150,4 +152,54 @@ object EMGM {
   def sum[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MySum).encodeS(t)
   def countInt[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MyCountInt).encodeS(t)
 
+  /*
+   * EXAMPLE: Generic equality
+   */
+
+  case class GEq[A](equals: A ⇒ A ⇒ Boolean)
+
+  class MyGEq extends Generic[GEq] {
+    override def unit = GEq(x ⇒ y ⇒ true)
+    override def plus[A, B] = a ⇒ b ⇒ GEq(x ⇒ y ⇒ (x, y) match {
+      case (Left(x), Left(y))   ⇒ a.equals(x)(y)
+      case (Right(x), Right(y)) ⇒ b.equals(x)(y)
+      case (_, _)               ⇒ false
+    })
+    override def prod[A, B] = a ⇒ b ⇒ GEq(x ⇒ y ⇒
+      a.equals(x._1)(y._1) && b.equals(x._2)(y._2)
+    )
+    override def char = GEq(x ⇒ y ⇒ x == y)
+    override def int = GEq(x ⇒ y ⇒ x == y)
+    override def view[A, B] = iso ⇒ a ⇒ GEq(x ⇒ y ⇒ a.equals(iso.from(x))(iso.from(y)))
+  }
+
+  def geq[T](a: T, b: T)(implicit r: Rep[T]): Boolean = r.rep(new MyGEq).equals(a)(b)
+}
+
+class EMGMTests extends FlatSpec {
+  import EMGM._
+  val unit = ()
+  "geq" should "work" in {
+    assert(geq(unit, unit))
+  }
+
+  "geq" should "support empty lists" in {
+    assert(geq(List.empty: List[Unit], List.empty))
+  }
+
+  "geq" should "support non-empty lists" in {
+    assert(geq(List(1, 2, 3), List(1, 2, 3)))
+    assert(!geq(List(1, 2, 3), List(1, 2, 4)))
+    assert(geq(List(unit, unit), List(unit, unit)))
+    assert(!geq(List(unit), List(unit, unit)))
+  }
+
+  "geq" should "support numbers" in {
+    assert(geq(42, 42))
+    assert(!geq(42, 7))
+  }
+  "geq" should "support chars" in {
+    assert(geq('4', '4'))
+    assert(!geq('4', '2'))
+  }
 }
