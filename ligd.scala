@@ -84,7 +84,7 @@ object LIGD {
     case Right((a, as)) ⇒ a :: as
   }
 
-  def rList[A](ra: ⇒ Rep[A]): Rep[List[A]] = RType(
+  def rList[A](ra: Rep[A]): Rep[List[A]] = RType(
     RSum(RUnit, RProd(ra, rList(ra))),
     EP(fromList[A], toList[A])
   )
