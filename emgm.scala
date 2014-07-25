@@ -138,26 +138,26 @@ object EMGM {
    * ====================================================================
    */
 
-  case class Sum[A](encodeS: A ⇒ Int)
+  case class Sum[A](sum: A ⇒ Int)
   class MySum extends Generic[Sum] {
     override def unit = Sum(_ ⇒ 0)
     override def plus[A, B] = a ⇒ b ⇒ Sum(_ match {
-      case Left(l)  ⇒ a.encodeS(l)
-      case Right(r) ⇒ b.encodeS(r)
+      case Left(l)  ⇒ a.sum(l)
+      case Right(r) ⇒ b.sum(r)
     })
-    override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.encodeS(x._1) + b.encodeS(x._2))
+    override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.sum(x._1) + b.sum(x._2))
     override def char = Sum(_ ⇒ 0)
     override def int = Sum((x: Int) ⇒ x)
     override def string = Sum(_ ⇒ 0)
-    override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.encodeS(iso.from(x)))
+    override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.sum(iso.from(x)))
   }
   class MyCountInt extends MySum {
     override def int = Sum(x ⇒ 1)
   }
 
   /* Generic function */
-  def sum[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MySum).encodeS(t)
-  def countInt[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MyCountInt).encodeS(t)
+  def sum[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MySum).sum(t)
+  def countInt[T](t: T)(implicit r: Rep[T]): Int = r.rep(new MyCountInt).sum(t)
 
   /*
    * EXAMPLE: Generic equality
