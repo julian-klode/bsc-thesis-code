@@ -34,6 +34,7 @@ object LIGD {
   def geq[A](a: A, b: A)(implicit rep: Rep[A]): Boolean = (rep, a, b) match {
     case (RUnit, (), ())                      ⇒ true
     case (RInt, a, b)                         ⇒ a == b
+    case (RFloat, a, b)                       ⇒ a == b
     case (RChar, a, b)                        ⇒ a == b
     case (RString, a, b)                      ⇒ a == b
     case (RSum(ra, rb), Left(a1), Left(a2))   ⇒ geq(a1, a2)(ra)
@@ -56,6 +57,7 @@ object LIGD {
 
   implicit case object RUnit extends Rep[Unit]
   implicit case object RInt extends Rep[Int]
+  implicit case object RFloat extends Rep[Float]
   implicit case object RChar extends Rep[Char]
   implicit case object RString extends Rep[String]
 
@@ -67,7 +69,7 @@ object LIGD {
   implicit def rProd[A, B](implicit a: Rep[A], b: Rep[B]): Rep[(A, B)] = RProd(a, b)
 
   /** Represent any type */
-  sealed class RType[C, B](c: ⇒ Rep[C], ep: EP[B, C]) extends Rep[B] {
+  class RType[C, B](c: ⇒ Rep[C], ep: EP[B, C]) extends Rep[B] {
     lazy val a = c
     lazy val b = ep
   }
