@@ -46,13 +46,13 @@ object LIGDCompany {
   )
 
   /** Example: Summing all the salaries in a data structure */
-  def sumSalary[A](a: A)(implicit rep: Rep[A]): Float = (rep, a) match {
-    case (RSum(ra, rb), Left(a))   ⇒ sumSalary(a)(ra)
-    case (RSum(ra, rb), Right(b))  ⇒ sumSalary(b)(rb)
-    case (RProd(ra, rb), (a, b))   ⇒ sumSalary(a)(ra) + sumSalary(b)(rb)
+  def sumSalaryOld[A](a: A)(implicit rep: Rep[A]): Float = (rep, a) match {
+    case (RSum(ra, rb), Left(a))   ⇒ sumSalaryOld(a)(ra)
+    case (RSum(ra, rb), Right(b))  ⇒ sumSalaryOld(b)(rb)
+    case (RProd(ra, rb), (a, b))   ⇒ sumSalaryOld(a)(ra) + sumSalaryOld(b)(rb)
     /* Scala does not recognize that salary is a Salary here */
     case (RSalary, salary: Salary) ⇒ RSalary.b.from(salary)
-    case (r: RType[_, A], t1)      ⇒ sumSalary(r.b.from(t1))(r.a)
+    case (r: RType[_, A], t1)      ⇒ sumSalaryOld(r.b.from(t1))(r.a)
     /* Catch all other cases here */
     case _                         ⇒ 0
   }
@@ -67,6 +67,8 @@ object LIGDCompany {
     case (rep, value)              ⇒ value
   }
 
+  def sumSalary[C](c: C)(implicit rep: Rep[C]): Float = foldl((a: Float, n: Salary) ⇒ (a + n.salary))(0)(c)
+  def sumDept[C](c: C)(implicit rep: Rep[C]): String = foldl((a: String, n: Dept) ⇒ (a + " " + n.name))("")(c)
 }
 
 class LIGDCompanyTests extends FlatSpec {
@@ -75,10 +77,15 @@ class LIGDCompanyTests extends FlatSpec {
   import LIGDCompany._
 
   "sum" should "be 111000.0" in {
+    assert(geq(sumSalaryOld(genCom), 111000.0F))
     assert(geq(sumSalary(genCom), 111000.0F))
   }
   "salary" should "be increased by 10%" in {
     assert(geq(incSalary(genCom, 10), expCom))
+  }
+
+  "foldl2" should "work" in {
+    assert(gMinInt((List(1, 2, 3), ((List(3, 4, 5), 9), 7))) == Some(1))
   }
 }
 
