@@ -72,6 +72,12 @@ object LIGD {
   class RType[C, B](c: ⇒ Rep[C], ep: EP[B, C]) extends Rep[B] {
     lazy val a = c
     lazy val b = ep
+
+    /* Will stack overflow on infinite types, but better than nothing */
+    override def equals(obj: Any): Boolean = obj match {
+      case RType(c1, ep1) ⇒ c1 == c
+      case _              ⇒ false
+    }
   }
   object RType {
     def apply[C, B](a: ⇒ Rep[C], b: EP[B, C]): RType[C, B] = new RType(a, b)
