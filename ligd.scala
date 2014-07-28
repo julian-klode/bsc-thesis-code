@@ -78,6 +78,9 @@ object LIGD {
     def unapply[C, B](sum: RType[C, B]) = Some(sum.a, sum.b)
   }
 
+  /** A small factory to make conversions easier */
+  def rType[C, B](from: B ⇒ C, to: C ⇒ B)(implicit rc: Rep[C]): RType[C, B] = RType(rc, EP(from, to))
+
   /** Isomorphism for converting between types */
   sealed case class EP[B, C](val from: B ⇒ C, val to: C ⇒ B)
 
