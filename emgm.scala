@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+import scala.language.higherKinds
+
 import org.scalatest._
 
 /** Implementation of (Extensible and Modular) Generics for the Masses
