@@ -73,10 +73,10 @@ object EMGM {
     * get the Rep[A] and Rep[B] stuff done, I tried to use case classes for
     * implementing the Rep, which failed :(
     */
-  implicit def REither[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
+  implicit def RSum[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
     override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
   }
-  implicit def RTuple2[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[(A, B)] {
+  implicit def RProd[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[(A, B)] {
     override def rep[G[_]](implicit g: Generic[G]): G[(A, B)] = g.prod(a.rep)(b.rep)
   }
 
