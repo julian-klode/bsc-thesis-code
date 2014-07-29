@@ -81,6 +81,30 @@ object UniPlate {
   /** Apply a transformation repeatedly, until a normal form is found */
   def rewrite[T](f: T ⇒ Option[T])(self: T)(implicit up: Uniplate[T]) = up.rewrite(f)(self)
 
+  type BiplateType[B, A] = B ⇒ (List[A], List[A] ⇒ B)
+
+  def universeOn[B, A](biplate: BiplateType[B, A])(self: B)(implicit up: Uniplate[A]) = biplate(self)._1.flatMap(universe(_)(up))
+  def transformOn[B, A](biplate: BiplateType[B, A])(f: A ⇒ A)(self: B)(implicit up: Uniplate[A]) = {
+    val (children, context) = biplate(self)
+    context(children.map(transform(f)))
+  }
+
+  /**
+   * We are encoding class Uniplate a => Biplate b a
+   *
+   * Because we need to encode the "Uniplate a" context, we use a class here
+   * that stores an implicit Uniplate[A] object instead of making the Uniplate[A]
+   * context part of the operations.
+    */
+  abstract class Biplate[B, A](implicit up: Uniplate[A]) {
+    def biplate(self: B): (List[A], List[A] ⇒ B)
+    private[UniPlate] final def universeBi(self: B) = universeOn(biplate)(self)
+    private[UniPlate] final def transformBi(f: A ⇒ A)(self: B) = transformOn(biplate)(f)(self)
+  }
+
+  def biplate[B, A](self: B)(implicit bp: Biplate[B, A]) = bp.biplate(self)
+  def universeBi[B, A](self:B)(implicit bp: Biplate[B, A]) = bp.universeBi(self)
+  def transformBi[B, A](f: A=>A)(self: B)(implicit bp: Biplate[B, A]) = bp.transformBi(f)(self)
 }
 
 class UniplateTest extends FlatSpec {
@@ -138,6 +162,21 @@ class UniplateTest extends FlatSpec {
     }
 
     assert(rewrite[Expr](f)(exp) == exp_);
+  }
+
+  "biplate" should "work" in {
+
+    implicit object BiplateListExpr extends Biplate[List[Expr], Expr] {
+      override def biplate(self: List[Expr]) = (self, x ⇒ x)
+    }
+
+    def variables[B](self: B)(implicit bp: Biplate[B, Expr]): List[String] = {
+      universeBi(self).map({ case Var(x) ⇒ x; case _ ⇒ null }).filter(_ != null)
+    }
+
+    val testList: List[Expr] = List(Add(Var("x"), Val(5)), Var("y"))
+
+    assert(variables(testList) == List("x", "y"))
   }
 
 }
