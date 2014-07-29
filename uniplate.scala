@@ -89,12 +89,11 @@ object UniPlate {
     context(children.map(transform(f)))
   }
 
-  /**
-   * We are encoding class Uniplate a => Biplate b a
-   *
-   * Because we need to encode the "Uniplate a" context, we use a class here
-   * that stores an implicit Uniplate[A] object instead of making the Uniplate[A]
-   * context part of the operations.
+  /** We are encoding class Uniplate a => Biplate b a
+    *
+    * Because we need to encode the "Uniplate a" context, we use a class here
+    * that stores an implicit Uniplate[A] object instead of making the Uniplate[A]
+    * context part of the operations.
     */
   abstract class Biplate[B, A](implicit up: Uniplate[A]) {
     def biplate(self: B): (List[A], List[A] ⇒ B)
@@ -103,8 +102,8 @@ object UniPlate {
   }
 
   def biplate[B, A](self: B)(implicit bp: Biplate[B, A]) = bp.biplate(self)
-  def universeBi[B, A](self:B)(implicit bp: Biplate[B, A]) = bp.universeBi(self)
-  def transformBi[B, A](f: A=>A)(self: B)(implicit bp: Biplate[B, A]) = bp.transformBi(f)(self)
+  def universeBi[B, A](self: B)(implicit bp: Biplate[B, A]) = bp.universeBi(self)
+  def transformBi[B, A](f: A ⇒ A)(self: B)(implicit bp: Biplate[B, A]) = bp.transformBi(f)(self)
 }
 
 class UniplateTest extends FlatSpec {
