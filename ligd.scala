@@ -119,35 +119,35 @@ class LIGDTests extends FlatSpec {
     assert(geq(unit, unit))
   }
 
-  "geq" should "support empty lists" in {
+  it should "support empty lists" in {
     assert(geq(List.empty: List[Unit], List.empty))
   }
 
-  "geq" should "support non-empty lists" in {
+  it should "support non-empty lists" in {
     assert(geq(List(1, 2, 3), List(1, 2, 3)))
     assert(!geq(List(1, 2, 3), List(1, 2, 4)))
     assert(geq(List(unit, unit), List(unit, unit)))
     assert(!geq(List(unit), List(unit, unit)))
   }
 
-  "geq" should "support numbers" in {
+  it should "support numbers" in {
     assert(geq(42, 42))
     assert(!geq(42, 7))
   }
-  "geq" should "support chars" in {
+  it should "support chars" in {
     assert(geq('4', '4'))
     assert(!geq('4', '2'))
   }
-  "geq" should "support strings" in {
+  it should "support strings" in {
     assert(geq("42", "42"))
     assert(!geq("42", "7"))
   }
-  "geq" should "support heterogeneous pairs" in {
+  it should "support heterogeneous pairs" in {
     assert(geq(("42", 7), ("42", 7)))
     assert(!geq(("42", 7), ("7", 7)))
     assert(!geq(("42", 7), ("42", 42)))
   }
-  "geq" should "support homogeneous pairs" in {
+  it should "support homogeneous pairs" in {
     assert(geq(("42", "7"), ("42", "7")))
     assert(!geq(("42", "7"), ("7", "7")))
     assert(!geq(("42", "7"), ("42", "42")))
