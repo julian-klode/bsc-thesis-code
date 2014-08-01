@@ -16,12 +16,13 @@
  * limitations under the License.
  */
 
-/** Example: The company data
-  *
-  * Operations to try:
-  * Increase all salaries by 10%
-  * Sum up all salaries
-  */
+/**
+ * Example: The company data
+ *
+ * Operations to try:
+ * Increase all salaries by 10%
+ * Sum up all salaries
+ */
 object CompanyData {
 
   case class Company(val depts: List[Dept])

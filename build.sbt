@@ -11,8 +11,8 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(AlignParameters, true)
   .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
-  .setPreference(MultilineScaladocCommentsStartOnFirstLine, true)
+  .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, false)
+  .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
 
 scalaSource in Compile := baseDirectory.value
 

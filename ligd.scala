@@ -18,17 +18,18 @@
 
 import org.scalatest._
 
-/** Implementation of LIGD for Scala as used in 2008.
-  *
-  * Based on:
-  * Comparing Libraries for Generic Programming in Haskell
-  * Technical Report UU-CS-2008-010
-  * by:
-  * Alexey Rodriguez, Johan Jeuring, Patrik Jansson, Alex Gerdes,
-  * Oleg Kiselyov, Bruno C. d. S. Oliveira.
-  *
-  * *Not* based on the code shipped in http://code.haskell.org/generics/LIGD/
-  */
+/**
+ * Implementation of LIGD for Scala as used in 2008.
+ *
+ * Based on:
+ * Comparing Libraries for Generic Programming in Haskell
+ * Technical Report UU-CS-2008-010
+ * by:
+ * Alexey Rodriguez, Johan Jeuring, Patrik Jansson, Alex Gerdes,
+ * Oleg Kiselyov, Bruno C. d. S. Oliveira.
+ *
+ * *Not* based on the code shipped in http://code.haskell.org/generics/LIGD/
+ */
 object LIGD {
 
   def geq[A](a: A, b: A)(implicit rep: Rep[A]): Boolean = (rep, a, b) match {
@@ -63,7 +64,13 @@ object LIGD {
   implicit def rSum[A, B](implicit a: Rep[A], b: Rep[B]): Rep[Either[A, B]] = RSum(a, b)
   implicit def rProd[A, B](implicit a: Rep[A], b: Rep[B]): Rep[(A, B)] = RProd(a, b)
 
-  /** Represent any type */
+  /**
+   * Represent any type
+   *
+   * We'd like to use a case class here, but need to be lazy for the rep, as
+   * we cannot represent lists and other recursive data structures otherwise.
+   * So define a normal class and a custom extractor.
+   */
   class RType[C, B](c: ⇒ Rep[C], ep: EP[B, C]) extends Rep[B] {
     lazy val a = c
     lazy val b = ep
@@ -86,7 +93,7 @@ object LIGD {
   sealed case class EP[B, C](val from: B ⇒ C, val to: C ⇒ B)
 
   /* ====================================================================
-   *          EXAMPLE: LISTS
+   *         EXAMPLE: LISTS
    * ====================================================================
    */
   def fromList[A](list: List[A]): Either[Unit, (A, List[A])] = list match {
@@ -105,8 +112,9 @@ object LIGD {
   )
 }
 
-/** Test cases.
-  */
+/**
+ * Test cases.
+ */
 class LIGDTests extends FlatSpec {
   import LIGD._
   val unit = ()

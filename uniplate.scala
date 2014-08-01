@@ -18,23 +18,25 @@
 
 import org.scalatest._
 
-/** Implementation of Uniplate for Scala
-  *
-  * Based on:
-  * Uniform Boilerplate and List Processing
-  * Or: Scrap Your Scary Types
-  * by:
-  * Neil Mitchell, Colin Runciman
-  * Published at:
-  * http://community.haskell.org/~ndm/downloads/paper-uniform_boilerplate_and_list_processing-30_sep_2007.pdf
-  */
+/**
+ * Implementation of Uniplate for Scala
+ *
+ * Based on:
+ * Uniform Boilerplate and List Processing
+ * Or: Scrap Your Scary Types
+ * by:
+ * Neil Mitchell, Colin Runciman
+ * Published at:
+ * http://community.haskell.org/~ndm/downloads/paper-uniform_boilerplate_and_list_processing-30_sep_2007.pdf
+ */
 object UniPlate {
 
-  /** The uniplate type class
-    *
-    * We are implementing the other functions here too, marked as final because
-    * it's easier to do here than outside where implicit parameters are used.
-    */
+  /**
+   * The uniplate type class
+   *
+   * We are implementing the other functions here too, marked as final because
+   * it's easier to do here than outside where implicit parameters are used.
+   */
   trait Uniplate[T] {
     def uniplate(self: T): (List[T], List[T] ⇒ T)
 
@@ -89,12 +91,13 @@ object UniPlate {
     context(children.map(transform(f)))
   }
 
-  /** We are encoding class Uniplate a => Biplate b a
-    *
-    * Because we need to encode the "Uniplate a" context, we use a class here
-    * that stores an implicit Uniplate[A] object instead of making the Uniplate[A]
-    * context part of the operations.
-    */
+  /**
+   * We are encoding class Uniplate a => Biplate b a
+   *
+   * Because we need to encode the "Uniplate a" context, we use a class here
+   * that stores an implicit Uniplate[A] object instead of making the Uniplate[A]
+   * context part of the operations.
+   */
   abstract class Biplate[B, A](implicit up: Uniplate[A]) {
     def biplate(self: B): (List[A], List[A] ⇒ B)
     private[UniPlate] final def universeBi(self: B) = universeOn(biplate)(self)

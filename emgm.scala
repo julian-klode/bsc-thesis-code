@@ -20,22 +20,24 @@ import scala.language.higherKinds
 
 import org.scalatest._
 
-/** Implementation of (Extensible and Modular) Generics for the Masses
-  *
-  * Based on: Extensible and Modular Generics for the Masses
-  * by: Bruno C. d. S. Oliveira , Ralf Hinze, Andres L
-  *
-  * Based on: Scala for Generic Programmers
-  * by: Bruno C. d. S. Oliveira and Jeremy Gibbons
-  */
+/**
+ * Implementation of (Extensible and Modular) Generics for the Masses
+ *
+ * Based on: Extensible and Modular Generics for the Masses
+ * by: Bruno C. d. S. Oliveira , Ralf Hinze, Andres L
+ *
+ * Based on: Scala for Generic Programmers
+ * by: Bruno C. d. S. Oliveira and Jeremy Gibbons
+ */
 object EMGM {
   /** Isomorphism for converting between types */
   sealed case class Iso[B, C](val from: B ⇒ C, val to: C ⇒ B)
 
-  /** Representation of generic functions.
-    *
-    * This gets ugly, because G is a type constructor.
-    */
+  /**
+   * Representation of generic functions.
+   *
+   * This gets ugly, because G is a type constructor.
+   */
   trait Generic[G[_]] {
     def unit: G[Unit]
     def plus[A, B]: G[A] ⇒ G[B] ⇒ G[Either[A, B]]
@@ -47,11 +49,12 @@ object EMGM {
     def view[A, B]: Iso[B, A] ⇒ (⇒ G[A]) ⇒ G[B]
   }
 
-  /** Representation of types.
-    *
-    * This gets ugly because we need to pass implicit Rep[A] objects around
-    * for every object A.
-    */
+  /**
+   * Representation of types.
+   *
+   * This gets ugly because we need to pass implicit Rep[A] objects around
+   * for every object A.
+   */
   trait Rep[A] {
     def rep[G[_]](implicit g: Generic[G]): G[A]
   }
@@ -69,10 +72,11 @@ object EMGM {
     override def rep[G[_]](implicit g: Generic[G]): G[Int] = g.int
   }
 
-  /** Thanks to Scala for Generic Programmers :). I did not figure out how to
-    * get the Rep[A] and Rep[B] stuff done, I tried to use case classes for
-    * implementing the Rep, which failed :(
-    */
+  /**
+   * Thanks to Scala for Generic Programmers :). I did not figure out how to
+   * get the Rep[A] and Rep[B] stuff done, I tried to use case classes for
+   * implementing the Rep, which failed :(
+   */
   implicit def RSum[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
     override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
   }
@@ -81,7 +85,7 @@ object EMGM {
   }
 
   /* ====================================================================
-   *          EXAMPLE: Encoding data to bits
+   *         EXAMPLE: Encoding data to bits
    * ====================================================================
    */
   def const[A, B](a: A)(b: B) = a
@@ -110,7 +114,7 @@ object EMGM {
   def encode[T](t: T)(implicit r: Rep[T]): List[Boolean] = r.rep(MyEncode).encodeS(t)
 
   /* ====================================================================
-   *          EXAMPLE: LISTS
+   *         EXAMPLE: LISTS
    * ====================================================================
    */
   def isoList[A]: Iso[List[A], Either[Unit, (A, List[A])]] = Iso(fromList, toList)
@@ -136,7 +140,7 @@ object EMGM {
 
   /** Function1 */
   /* ====================================================================
-   *          EXAMPLE: Function1s
+   *         EXAMPLE: Function1s
    * ====================================================================
    */
 
