@@ -27,7 +27,8 @@ import scala.language.higherKinds
  * Based on: Scala for Generic Programmers
  * by: Bruno C. d. S. Oliveira and Jeremy Gibbons
  */
-object EMGM {
+trait EMGM {
+
   /** Isomorphism for converting between types */
   sealed case class Iso[B, C](val from: B ⇒ C, val to: C ⇒ B)
 
@@ -75,6 +76,7 @@ object EMGM {
    * get the Rep[A] and Rep[B] stuff done, I tried to use case classes for
    * implementing the Rep, which failed :(
    */
+
   implicit def RSum[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
     override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
   }
@@ -187,3 +189,85 @@ object EMGM {
 
   def geq[T](a: T, b: T)(implicit r: Rep[T]): Boolean = r.rep(new MyGEq).geq(a)(b)
 }
+
+// Oliveira, Hinze & Loeh, sec. 1.5
+trait EMGM_sec_1_5 extends EMGM {
+
+  // the type parameter G is instantiated to the operation.
+  // In the GEq example, G is instantiated to GEq.
+  // see `implicit object GEqList`
+  trait GRep[G[_], A] {
+    def grep: G[A]
+  }
+
+  // since the generic operation G has to be fixed before a subclass of GRep
+  // is instantiated, subclasses must take `g: Generic[G]` as a constructor
+  // parameter.
+  implicit def GRString[G[_]](implicit g: Generic[G]) = new GRep[G, String] {
+    def grep: G[String] = g.string
+  }
+
+  implicit def GRUnit[G[_]](implicit g: Generic[G]) = new GRep[G, Unit] {
+    def grep: G[Unit] = g.unit
+  }
+
+  implicit def GRChar[G[_]](implicit g: Generic[G]) = new GRep[G, Char] {
+    def grep: G[Char] = g.char
+  }
+
+  implicit def GRInt[G[_]](implicit g: Generic[G]) = new GRep[G, Int] {
+    def grep: G[Int] = g.int
+  }
+
+  implicit def GRSum[G[_], A, B](implicit g: Generic[G], a: GRep[G, A], b: GRep[G, B]) =
+    new GRep[G, Either[A, B]] {
+      override def grep: G[Either[A, B]] = g.plus(a.grep)(b.grep)
+    }
+
+  implicit def GRProd[G[_], A, B](implicit g: Generic[G], a: GRep[G, A], b: GRep[G, B]) =
+    new GRep[G, (A, B)] {
+      override def grep: G[(A, B)] = g.prod(a.grep)(b.grep)
+    }
+
+  // TODO: GRView
+
+  // generic operation extended with an extra case for lists
+  trait GenericList[G[_]] extends Generic[G] {
+    def list[A]: G[A] ⇒ G[List[A]]
+  }
+
+  // dispatcher for the extra `list` case
+  implicit def GRList[G[_], A](implicit g: GenericList[G], a: GRep[G, A]) =
+    new GRep[G, List[A]] {
+      def grep: G[List[A]] = g.list(a.grep)
+    }
+
+  // generic equality with a special case for lists
+  // should be passed to `GRList` as the implicit parameter `g: GenericList[G]`,
+  // hence declared as implicit
+  implicit object GEqList extends MyGEq with GenericList[GEq] {
+
+    // special case of GEq for lists, semantically equivalent
+    // to an object of type MyGeq. It is here to demonstrate
+    // that it is possible to add new cases to a generic operation.
+    //
+    // 1. If two lists have unequal length, then they are not equal.
+    // 2. Two empty lists are equal.
+    // 3. Two nonempty lists of equal length are equal if all their
+    //    elements are equal.
+    def list[A]: GEq[A] ⇒ GEq[List[A]] = eq ⇒ GEq { xs ⇒
+      ys ⇒
+        xs.length == ys.length && (
+          xs.isEmpty ||
+          xs.zip(ys).map({ case (x, y) ⇒ eq.geq(x)(y) }).min)
+    }
+  }
+
+  def geqList[T](a: T, b: T)(implicit r: GRep[GEq, T]): Boolean =
+    r.grep.geq(a)(b)
+
+  // demonstrating EMGM as a solution to the "expression problem"
+  // would be interesting. see Oliveira, Hinze & Loeh, sec. 1.6.1
+}
+
+object EMGM extends EMGM with EMGM_sec_1_5

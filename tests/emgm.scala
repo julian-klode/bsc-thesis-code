@@ -21,6 +21,8 @@ import org.scalatest._
 class EMGMTests extends FlatSpec {
   import EMGM._
   val unit = ()
+
+  // tests for methods defined in trait EMGM
   "geq" should "work" in {
     assert(geq(unit, unit))
   }
@@ -57,5 +59,44 @@ class EMGMTests extends FlatSpec {
     assert(geq(("42", "7"), ("42", "7")))
     assert(!geq(("42", "7"), ("7", "7")))
     assert(!geq(("42", "7"), ("42", "42")))
+  }
+
+  // tests for methods defined in trait EMGM_sec_1_5
+  "geqList" should "work" in {
+    assert(geqList(unit, unit))
+  }
+
+  it should "support empty lists" in {
+    assert(geqList(List.empty: List[Unit], List.empty))
+  }
+
+  it should "support non-empty lists" in {
+    assert(geqList(List(1, 2, 3), List(1, 2, 3)))
+    assert(!geqList(List(1, 2, 3), List(1, 2, 4)))
+    assert(geqList(List(unit, unit), List(unit, unit)))
+    assert(!geqList(List(unit), List(unit, unit)))
+  }
+
+  it should "support numbers" in {
+    assert(geqList(42, 42))
+    assert(!geqList(42, 7))
+  }
+  it should "support chars" in {
+    assert(geqList('4', '4'))
+    assert(!geqList('4', '2'))
+  }
+  it should "support strings" in {
+    assert(geqList("42", "42"))
+    assert(!geqList("42", "7"))
+  }
+  it should "support heterogeneous pairs" in {
+    assert(geqList(("42", 7), ("42", 7)))
+    assert(!geqList(("42", 7), ("7", 7)))
+    assert(!geqList(("42", 7), ("42", 42)))
+  }
+  it should "support homogeneous pairs" in {
+    assert(geqList(("42", "7"), ("42", "7")))
+    assert(!geqList(("42", "7"), ("7", "7")))
+    assert(!geqList(("42", "7"), ("42", "42")))
   }
 }
