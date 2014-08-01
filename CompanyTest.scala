@@ -19,9 +19,8 @@
 import scala.language.implicitConversions
 import org.scalatest._
 
-import LIGD._
-
 object LIGDCompany {
+  import LIGD._
   import CompanyData._
 
   /* Let's play a trick */
@@ -71,6 +70,7 @@ object LIGDCompany {
 }
 
 class LIGDCompanyTests extends FlatSpec {
+  import LIGD._
   import CompanyData._
   import LIGDCompany._
 
@@ -80,4 +80,19 @@ class LIGDCompanyTests extends FlatSpec {
   "salary" should "be increased by 10%" in {
     assert(geq(incSalary(genCom, 10), expCom))
   }
+}
+
+class ShapelessCompanyTests extends FlatSpec {
+  import shapeless._
+  import CompanyData._
+
+  object combine extends Poly {
+    implicit def caseSalaryFloat = use((s: Salary, f: Float) ⇒ s.salary + f)
+  }
+
+  "salary" should "be increased by 10%" in {
+    def incSalary(i: Salary) = Salary(i.salary * 1.1F)
+    assert(everywhere(incSalary _)(genCom) == expCom)
+  }
+
 }

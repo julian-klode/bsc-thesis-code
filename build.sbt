@@ -2,6 +2,11 @@ import scalariform.formatter.preferences._
 
 scalariformSettings
 
+resolvers ++= Seq(
+  Resolver.sonatypeRepo("releases"),
+  Resolver.sonatypeRepo("snapshots")
+)
+
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(AlignParameters, true)
@@ -18,4 +23,7 @@ scalaVersion := "2.11.1"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
-libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.0"
+libraryDependencies ++= Seq(
+  "org.scalatest" % "scalatest_2.11" % "2.2.0",
+  "com.chuusai" %% "shapeless" % "2.0.0"
+)
