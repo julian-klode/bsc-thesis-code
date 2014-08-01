@@ -47,13 +47,8 @@ object LIGD {
 
   }
 
-  /* Representation of types as GADTS.
-   *
-   * We'd like to use case classes here, but need to be lazy, as we cannot
-   * represent lists and other recursive data structures otherwise. So define
-   * normal classes and custom extractors.
-   */
-  sealed abstract class Rep[+T]
+  /** Representation of types as GADTS. */
+  sealed abstract class Rep[T]
 
   implicit case object RUnit extends Rep[Unit]
   implicit case object RInt extends Rep[Int]
