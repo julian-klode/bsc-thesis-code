@@ -160,6 +160,12 @@ object LIGD {
     case _                        ⇒ unit
   }
 
+  /** Simple foldl, like scala's foldLeft */
+  def foldl[A, C[_], N](c: C[N])(unit: A)(fun: (A, N) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldl(fun)(unit)(c)(rep, rn)
+
+  /** Simple foldr, like scala's foldRight */
+  def foldr[A, C[_], N](c: C[N])(unit: A)(fun: (N, A) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldr(fun)(unit)(c)(rep, rn)
+
   /**
    * Find all instances of a given type in an object.
    *
@@ -262,11 +268,19 @@ class LIGDTests extends FlatSpec {
   "folding" should "have working gfoldl examples" in {
     val div = (_: Int) / (_: Int)
     val max = scala.math.max(_: Int, _: Int)
+
     assert(gfoldl(div)(64)(List(4, 2, 4)) == 2)
     assert(gfoldl(div)(3)(List.empty: List[Int]) == 3)
     assert(gfoldl(max)(5)(List(1, 2, 3, 4)) == 5)
     assert(gfoldl(max)(5)(List(1, 2, 3, 4, 5, 6, 7)) == 7)
     assert(gfoldl((x: Int, y: Int) ⇒ 2 * x + y)(4)(List(1, 2, 3)) == 43)
+
+    /* foldl is much nicer, due to the C[N] and the re-ordered arguments */
+    assert(foldl(List(4, 2, 4))(64)(_ / _) == 2)
+    assert(foldl(List.empty: List[Int])(3)(_ / _) == 3)
+    assert(foldl(List(1, 2, 3, 4))(5)(scala.math.max) == 5)
+    assert(foldl(List(1, 2, 3, 4, 5, 6, 7))(5)(scala.math.max) == 7)
+    assert(foldl(List(1, 2, 3))(4)((x, y) ⇒ 2 * x + y) == 43)
   }
 
   it should "have working gfoldr examples" in {
