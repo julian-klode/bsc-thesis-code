@@ -30,7 +30,7 @@ object Main {
       def incSalaryD(d: Dept) = Dept(d.name, incSalaryE(d.manager), d.units.map(incSalaryU))
       def incSalaryU(du: DUnit): DUnit = du match {
         case DU(d) ⇒ DU(incSalaryD(d))
-        case PU(p) ⇒ PU(p)
+        case PU(p) ⇒ PU(incSalaryE(p))
       }
       def incSalaryE(e: Employee) = Employee(e.person, incSalaryS(e.salary))
       def incSalaryS(s: Salary) = Salary(s.salary * 110 / 100)
@@ -85,6 +85,8 @@ object Main {
   }
 
   def main(args: Array[String]) {
+    assert(company(L.Direct).get == expCom)
+
     val tests = List(("company", company _), ("geq", geq _), ("min", min _),
       ("sum", sum _))
     printf("\\begin{tabular}{c")
