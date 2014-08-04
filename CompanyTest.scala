@@ -67,8 +67,8 @@ object LIGDCompany {
     case (rep, value)              ⇒ value
   }
 
-  def sumSalary[C](c: C)(implicit rep: Rep[C]): Float = foldl((a: Float, n: Salary) ⇒ (a + n.salary))(0)(c)
-  def sumDept[C](c: C)(implicit rep: Rep[C]): String = foldl((a: String, n: Dept) ⇒ (a + " " + n.name))("")(c)
+  def sumSalary[C](c: C)(implicit rep: Rep[C]): Float = gfoldl((a: Float, n: Salary) ⇒ (a + n.salary))(0)(c)
+  def sumDept[C](c: C)(implicit rep: Rep[C]): String = gfoldl((a: String, n: Dept) ⇒ (a + " " + n.name))("")(c)
 }
 
 class LIGDCompanyTests extends FlatSpec {
@@ -84,7 +84,7 @@ class LIGDCompanyTests extends FlatSpec {
     assert(geq(incSalary(genCom, 10), expCom))
   }
 
-  "foldl2" should "work" in {
+  "gfoldl2" should "work" in {
     assert(gMinInt((List(1, 2, 3), ((List(3, 4, 5), 9), 7))) == Some(1))
   }
 }
