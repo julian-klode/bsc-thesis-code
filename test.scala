@@ -48,13 +48,13 @@ object Main {
   }
 
   def min(lib: L.Value) = lib match {
-    case L.LIGD   ⇒ Some(LIGD.minInt(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(scala.math.min))
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(scala.math.min))
     case _        ⇒ None
   }
   def sum(lib: L.Value) = lib match {
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(_ + _))
-    case L.LIGD   ⇒ Some(LIGD.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(_ + _))
     case _        ⇒ None
   }
 
