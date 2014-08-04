@@ -111,7 +111,12 @@ object LIGD {
   case class RList[A](ra: Rep[A]) extends RType(
     RSum(RUnit, RProd(ra, rList(ra))),
     EP(fromList[A], toList[A])
-  )
+  ) {
+    override def equals(other: Any): Boolean = other match {
+      case RList(rb) ⇒ this.ra == rb
+      case _         ⇒ false
+    }
+  }
 
   implicit def rList[A](implicit ra: Rep[A]): Rep[List[A]] = RList(ra)
 }
