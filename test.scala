@@ -25,7 +25,19 @@ object Main {
   def company(lib: L.Value) = lib match {
     case L.Shapeless ⇒ Some(shapeless.everywhere(incS _)(CompanyData.genCom))
     case L.LIGD      ⇒ Some(LIGDCompany.incSalary(CompanyData.genCom, 10))
-    case _           ⇒ None
+    case L.Direct ⇒ {
+      def incSalary(c: Company) = Company(c.depts.map(incSalaryD))
+      def incSalaryD(d: Dept) = Dept(d.name, incSalaryE(d.manager), d.units.map(incSalaryU))
+      def incSalaryU(du: DUnit): DUnit = du match {
+        case DU(d) ⇒ DU(incSalaryD(d))
+        case PU(p) ⇒ PU(p)
+      }
+      def incSalaryE(e: Employee) = Employee(e.person, incSalaryS(e.salary))
+      def incSalaryS(s: Salary) = Salary(s.salary * 110 / 100)
+
+      Some(incSalary(genCom))
+    }
+    case _ ⇒ None
   }
 
   def geq(lib: L.Value) = lib match {
