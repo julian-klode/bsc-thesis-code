@@ -23,6 +23,7 @@ object Main {
   def incS(i: Salary) = Salary(i.salary * 1.1F)
 
   def company(lib: L.Value) = lib match {
+    case L.None      ⇒ Some(expCom)
     case L.Shapeless ⇒ Some(shapeless.everywhere(incS _)(CompanyData.genCom))
     case L.LIGD      ⇒ Some(LIGDCompany.incSalary(CompanyData.genCom, 10))
     case L.Direct ⇒ {
@@ -41,6 +42,7 @@ object Main {
   }
 
   def geq(lib: L.Value) = lib match {
+    case L.None   ⇒ Some(false)
     case L.Direct ⇒ Some(List(1, 2, 3, 4, 5).equals(List(1, 2, 3, 4, 5, 6)))
     case L.LIGD   ⇒ Some(LIGD.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
     case L.EMGM   ⇒ Some(EMGM.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
@@ -48,11 +50,13 @@ object Main {
   }
 
   def min(lib: L.Value) = lib match {
+    case L.None   ⇒ Some(0)
     case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(scala.math.min))
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(scala.math.min))
     case _        ⇒ None
   }
   def sum(lib: L.Value) = lib match {
+    case L.None   ⇒ Some(72)
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(_ + _))
     case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(_ + _))
     case _        ⇒ None
@@ -81,7 +85,7 @@ object Main {
 
   object L extends Enumeration {
     type L = Value
-    val Direct, Shapeless, LIGD, EMGM = Value
+    val Direct, None, Shapeless, LIGD, EMGM = Value
   }
 
   def main(args: Array[String]) {
@@ -101,12 +105,18 @@ object Main {
     println("\\\\")
     println("\\hline")
     for (lib ← L.values) {
-      printf("%-10s", lib.toString())
-      for ((testname, test) ← tests) {
+      if (lib != L.None) {
+        printf("%-10s", lib.toString())
+        for ((testname, test) ← tests) {
+          test(lib) match {
+            case Some(result) ⇒ assert(result == test(L.None).get, s"${lib.toString}: $testname failed. Expected ${test(L.None)}, received ${test(lib)}")
+            case None         ⇒ true
+          }
 
-        bench(lib.toString(), testname, test(lib))
+          bench(lib.toString(), testname, test(lib))
+        }
+        println("\\\\")
       }
-      println("\\\\")
     }
     println("\\end{tabular}")
   }
