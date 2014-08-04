@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+import scala.language.higherKinds
+
 import org.scalatest._
 
 /**
@@ -119,6 +121,98 @@ object LIGD {
   }
 
   implicit def rList[A](implicit ra: Rep[A]): Rep[List[A]] = RList(ra)
+
+  /**
+   * Usage: foldl(fun: (A, N) => A)(unit: A)(container: C)
+   *
+   * A simple left fold over some container. The function needs to have both
+   * argument types annotated, otherwise Scala won't be able to infer the
+   * representation of N.
+   *
+   * Type notes: A means accumulator, C means container, N means needle
+   *
+   */
+  def foldl[A, C, N](fun: (A, N) ⇒ A)(unit: A)(c: C)(implicit rep: Rep[C], rn: Rep[N]): A = (rep, c) match {
+    case (r, v) if r == rn        ⇒ fun(unit, v.asInstanceOf[N])
+    case (RSum(ra, rb), Left(x))  ⇒ foldl(fun)(unit)(x)(ra, rn)
+    case (RSum(ra, rb), Right(x)) ⇒ foldl(fun)(unit)(x)(rb, rn)
+    case (RProd(ra, rb), (x, y))  ⇒ foldl(fun)(foldl(fun)(unit)(x)(ra, rn))(y)(rb, rn)
+    case (r: RType[_, C], t1)     ⇒ foldl(fun)(unit)(r.b.from(t1))(r.a, rn)
+    case _                        ⇒ unit
+  }
+
+  /**
+   * Usage: foldr(fun: (A, N) => A)(unit: A)(container: C)
+   *
+   * A simple right fold over some container. The function needs to have both
+   * argument types annotated, otherwise Scala won't be able to infer the
+   * representation of N.
+   *
+   * Type notes: A means accumulator, C means container, N means needle
+   *
+   */
+  def foldr[A, C, N](fun: (N, A) ⇒ A)(unit: A)(c: C)(implicit rep: Rep[C], rn: Rep[N]): A = (rep, c) match {
+    case (r, v) if r == rn        ⇒ fun(v.asInstanceOf[N], unit)
+    case (RSum(ra, rb), Left(x))  ⇒ foldr(fun)(unit)(x)(ra, rn)
+    case (RSum(ra, rb), Right(x)) ⇒ foldr(fun)(unit)(x)(rb, rn)
+    case (RProd(ra, rb), (x, y))  ⇒ foldr(fun)(foldr(fun)(unit)(y)(rb, rn))(x)(ra, rn)
+    case (r: RType[_, C], t1)     ⇒ foldr(fun)(unit)(r.b.from(t1))(r.a, rn)
+    case _                        ⇒ unit
+  }
+
+  /**
+   * Find all instances of a given type in an object.
+   *
+   * @param rn The representation of objects were a looking for
+   * @param c The containing object we are searching in
+   * @param rc (Implicit) Representation of c
+   */
+  def findAll[N, C](rn: Rep[N])(c: C)(implicit rc: Rep[C]) = foldr(
+    (x: N, xs: List[N]) ⇒ x :: xs
+  )(List.empty)(c)(rc, rn)
+
+  /**
+   * A generic sum that can sum both integers and floats (and products
+   *
+   * @param rt The representation of T values we want to build sums of
+   * @param c  The container containing (or not) or T values
+   */
+  def gSum[T, C](rt: Rep[T], c: C)(implicit rep: Rep[C]): T = {
+    foldl(add(rt))(zero(rt))(c)(rep, rt)
+  }
+
+  /**
+   * A generic sum that can sum both integers and floats (and products
+   *
+   * @param rt The representation of T values we want to build sums of
+   * @param c  The container containing (or not) or T values
+   */
+  def sum[T, C[_]](c: C[T])(implicit rep: Rep[C[T]], rt: Rep[T]): T = {
+    foldl(add(rt))(zero(rt))(c)(rep, rt)
+  }
+
+  /** Helper for sumOf: Add two objects of same type */
+  def add[T](rep: Rep[T])(a: T, b: T): T = rep match {
+    case RInt          ⇒ a + b
+    case RFloat        ⇒ a + b
+    case RProd(ra, rb) ⇒ (add(ra)(a._1, b._1), add(rb)(a._2, b._2))
+    case _             ⇒ throw new Exception("Unknown types")
+  }
+
+  /** Helper for sumOf: Return a zero value */
+  def zero[T](implicit rep: Rep[T]): T = rep match {
+    case RInt          ⇒ 0
+    case RFloat        ⇒ 0F
+    case RProd(ra, rb) ⇒ (zero(ra), zero(rb))
+    case _             ⇒ throw new Exception("Unknown types")
+  }
+
+  /** Helper: If a is None, return n, otherwise the minimum of both */
+  def _minOrNone(a: Option[Int], n: Int): Option[Int] = Some(a.fold(n)(scala.math.min(_, n)))
+  /** Find the minimum Integer in an object. If none exists, return None */
+  def gMinInt[C](c: C)(implicit rep: Rep[C]): Option[Int] = foldl(_minOrNone)(None)(c)
+  /** Find the minimum integer in a container of integers */
+  def minInt[C[_]](c: C[Int])(implicit rep: Rep[C[Int]]): Option[Int] = gMinInt(c)(rep)
 }
 
 /**
@@ -163,5 +257,26 @@ class LIGDTests extends FlatSpec {
     assert(geq(("42", "7"), ("42", "7")))
     assert(!geq(("42", "7"), ("7", "7")))
     assert(!geq(("42", "7"), ("42", "42")))
+  }
+
+  "folding" should "have working foldl examples" in {
+    val div = (_: Int) / (_: Int)
+    val max = scala.math.max(_: Int, _: Int)
+    assert(foldl(div)(64)(List(4, 2, 4)) == 2)
+    assert(foldl(div)(3)(List.empty: List[Int]) == 3)
+    assert(foldl(max)(5)(List(1, 2, 3, 4)) == 5)
+    assert(foldl(max)(5)(List(1, 2, 3, 4, 5, 6, 7)) == 7)
+    assert(foldl((x: Int, y: Int) ⇒ 2 * x + y)(4)(List(1, 2, 3)) == 43)
+  }
+
+  it should "have working foldr examples" in {
+    val max = scala.math.max(_: Int, _: Int)
+    assert(foldr((_: Int) + (_: Int))(5)(List(1, 2, 3, 4)) == 15)
+    assert(foldr((_: Int) / (_: Int))(2)(List(8, 12, 24, 4)) == 8)
+    assert(foldr((_: Int) / (_: Int))(3)(List.empty: List[Int]) == 3)
+    assert(foldr((_: Boolean) && (_: Boolean))(true)(List(1 > 2, 3 > 2, 5 == 5)) == false)
+    assert(foldr(max)(18)(List(3, 6, 12, 4, 55, 11)) == 55)
+    assert(foldr(max)(111)(List(3, 6, 12, 4, 55, 11)) == 111)
+    assert(foldr((a: Int, b: Int) ⇒ (a + b) / 2)(54)(List(12, 4, 10, 6)) == 12)
   }
 }
