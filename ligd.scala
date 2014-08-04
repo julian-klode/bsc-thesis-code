@@ -34,6 +34,7 @@ object LIGD {
 
   def geq[A](a: A, b: A)(implicit rep: Rep[A]): Boolean = (rep, a, b) match {
     case (RUnit, (), ())                      ⇒ true
+    case (RBoolean, a, b)                     ⇒ a == b
     case (RInt, a, b)                         ⇒ a == b
     case (RFloat, a, b)                       ⇒ a == b
     case (RChar, a, b)                        ⇒ a == b
@@ -51,6 +52,7 @@ object LIGD {
   /** Representation of types as GADTS. */
   sealed abstract class Rep[T]
 
+  implicit case object RBoolean extends Rep[Boolean]
   implicit case object RUnit extends Rep[Unit]
   implicit case object RInt extends Rep[Int]
   implicit case object RFloat extends Rep[Float]
