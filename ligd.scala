@@ -106,10 +106,12 @@ object LIGD {
     case Right((a, as)) ⇒ a :: as
   }
 
-  implicit def rList[A](implicit ra: Rep[A]): Rep[List[A]] = RType(
+  case class RList[A](ra: Rep[A]) extends RType(
     RSum(RUnit, RProd(ra, rList(ra))),
     EP(fromList[A], toList[A])
   )
+
+  implicit def rList[A](implicit ra: Rep[A]): Rep[List[A]] = RList(ra)
 }
 
 /**
