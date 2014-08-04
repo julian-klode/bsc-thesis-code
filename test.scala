@@ -29,9 +29,21 @@ object Main {
   }
 
   def geq(lib: L.Value) = lib match {
-    case L.LIGD ⇒ Some(LIGD.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
-    case L.EMGM ⇒ Some(EMGM.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
-    case _      ⇒ None
+    case L.Direct ⇒ Some(List(1, 2, 3, 4, 5).equals(List(1, 2, 3, 4, 5, 6)))
+    case L.LIGD   ⇒ Some(LIGD.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
+    case L.EMGM   ⇒ Some(EMGM.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
+    case _        ⇒ None
+  }
+
+  def min(lib: L.Value) = lib match {
+    case L.LIGD   ⇒ Some(LIGD.minInt(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(scala.math.min))
+    case _        ⇒ None
+  }
+  def sum(lib: L.Value) = lib match {
+    case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(_ + _))
+    case L.LIGD   ⇒ Some(LIGD.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case _        ⇒ None
   }
 
   def bench[A](lib: String, test: String, code: ⇒ Option[A]) = code match {
@@ -57,11 +69,12 @@ object Main {
 
   object L extends Enumeration {
     type L = Value
-    val Shapeless, LIGD, EMGM = Value
+    val Direct, Shapeless, LIGD, EMGM = Value
   }
 
   def main(args: Array[String]) {
-    val tests = List(("company", company _), ("geq", geq _))
+    val tests = List(("company", company _), ("geq", geq _), ("min", min _),
+      ("sum", sum _))
     printf("\\begin{tabular}{c")
     for (lib ← tests) {
       printf("|r")
