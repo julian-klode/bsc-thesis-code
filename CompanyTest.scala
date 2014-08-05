@@ -91,6 +91,7 @@ class LIGDCompanyTests extends FlatSpec {
 
 class ShapelessCompanyTests extends FlatSpec {
   import shapeless._
+  import poly._
   import CompanyData._
 
   object combine extends Poly {
@@ -98,9 +99,9 @@ class ShapelessCompanyTests extends FlatSpec {
   }
 
   "salary" should "be increased by 10%" in {
-    def incSalary(i: Salary) = Salary(i.salary * 1.1F)
-    // TODO: Shapeless is broken
-    // assert(everywhere(incSalary _)(genCom) == expCom) 
+    // We need to create a poly object here, shapeless fails horribly otherwise
+    object incSalary extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
+    assert(everywhere(incSalary)(genCom) == expCom)
   }
 
 }

@@ -19,12 +19,13 @@
 object Main {
   import CompanyData._
   import LIGDCompany._
+  import shapeless.poly._
 
-  def incS(i: Salary) = Salary(i.salary * 1.1F)
+  object incS extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
 
   def company(lib: L.Value) = lib match {
     case L.None      ⇒ Some(expCom)
-    case L.Shapeless ⇒ Some(shapeless.everywhere(incS _)(CompanyData.genCom))
+    case L.Shapeless ⇒ Some(shapeless.everywhere(incS)(CompanyData.genCom))
     case L.LIGD      ⇒ Some(LIGDCompany.incSalary(CompanyData.genCom, 10))
     case L.Direct ⇒ {
       def incSalary(c: Company) = Company(c.depts.map(incSalaryD))
