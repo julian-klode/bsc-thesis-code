@@ -67,8 +67,8 @@ object LIGDCompany {
     case (rep, value)              ⇒ value
   }
 
-  def sumSalary[C](c: C)(implicit rep: Rep[C]): Float = gfoldl((a: Float, n: Salary) ⇒ (a + n.salary))(0)(c)
-  def sumDept[C](c: C)(implicit rep: Rep[C]): String = gfoldl((a: String, n: Dept) ⇒ (a + " " + n.name))("")(c)
+  def sumSalary[C: Rep](c: C): Float = gfoldl((a: Float, n: Salary) ⇒ (a + n.salary))(0)(c)
+  def sumDept[C: Rep](c: C): String = gfoldl((a: String, n: Dept) ⇒ (a + " " + n.name))("")(c)
 }
 
 class LIGDCompanyTests extends FlatSpec {

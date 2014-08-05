@@ -206,7 +206,7 @@ object LIGD {
   }
 
   /** Helper for sumOf: Return a zero value */
-  def zero[T](implicit rep: Rep[T]): T = rep match {
+  def zero[T: Rep]: T = implicitly[Rep[T]] match {
     case RInt          ⇒ 0
     case RFloat        ⇒ 0F
     case RProd(ra, rb) ⇒ (zero(ra), zero(rb))
@@ -216,7 +216,7 @@ object LIGD {
   /** Helper: If a is None, return n, otherwise the minimum of both */
   def _minOrNone(a: Option[Int], n: Int): Option[Int] = Some(a.fold(n)(scala.math.min(_, n)))
   /** Find the minimum Integer in an object. If none exists, return None */
-  def gMinInt[C](c: C)(implicit rep: Rep[C]): Option[Int] = gfoldl(_minOrNone)(None)(c)
+  def gMinInt[C: Rep](c: C): Option[Int] = gfoldl(_minOrNone)(None)(c)
   /** Find the minimum integer in a container of integers */
   def minInt[C[_]](c: C[Int])(implicit rep: Rep[C[Int]]): Option[Int] = gMinInt(c)(rep)
 
