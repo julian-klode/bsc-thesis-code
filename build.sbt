@@ -14,9 +14,9 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, false)
   .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
 
-scalaSource in Compile := baseDirectory.value
+scalaSource in Compile := baseDirectory.value / "src"
 
-scalaSource in Test := baseDirectory.value
+scalaSource in Test := baseDirectory.value / "tests"
 
 
 scalaVersion := "2.11.1"

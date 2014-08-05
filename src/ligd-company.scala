@@ -1,5 +1,5 @@
 /*
- * lidg.scala - Implementation of LIGD for Scala.
+ * lidg-company.scala - LIGD types for the company example
  *
  * Copyright 2014 Julian Andres Klode <klode@mathematik.uni-marburg.de>
  *
@@ -15,9 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import scala.language.implicitConversions
-import org.scalatest._
 
 object LIGDCompany {
   import LIGD._
@@ -69,40 +66,4 @@ object LIGDCompany {
 
   def sumSalary[C: Rep](c: C): Float = gfoldl((a: Float, n: Salary) ⇒ (a + n.salary))(0)(c)
   def sumDept[C: Rep](c: C): String = gfoldl((a: String, n: Dept) ⇒ (a + " " + n.name))("")(c)
-}
-
-class LIGDCompanyTests extends FlatSpec {
-  import LIGD._
-  import CompanyData._
-  import LIGDCompany._
-
-  "sum" should "be 111000.0" in {
-    assert(geq(sumSalaryOld(genCom), 111000.0F))
-    assert(geq(sumSalary(genCom), 111000.0F))
-  }
-  "salary" should "be increased by 10%" in {
-    assert(geq(incSalary(genCom, 10), expCom))
-    assert(geq(everywhere((i: Salary) ⇒ Salary(i.salary * 1.1F))(genCom), expCom))
-  }
-
-  "gfoldl2" should "work" in {
-    assert(gMinInt((List(1, 2, 3), ((List(3, 4, 5), 9), 7))) == Some(1))
-  }
-}
-
-class ShapelessCompanyTests extends FlatSpec {
-  import shapeless._
-  import poly._
-  import CompanyData._
-
-  object combine extends Poly {
-    implicit def caseSalaryFloat = use((s: Salary, f: Float) ⇒ s.salary + f)
-  }
-
-  "salary" should "be increased by 10%" ignore {
-    // We need to create a poly object here, shapeless fails horribly otherwise
-    object incSalary extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
-    assert(everywhere(incSalary)(genCom) == expCom)
-  }
-
 }

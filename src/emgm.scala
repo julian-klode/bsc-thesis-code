@@ -18,8 +18,6 @@
 
 import scala.language.higherKinds
 
-import org.scalatest._
-
 /**
  * Implementation of (Extensible and Modular) Generics for the Masses
  *
@@ -188,46 +186,4 @@ object EMGM {
   }
 
   def geq[T](a: T, b: T)(implicit r: Rep[T]): Boolean = r.rep(new MyGEq).equals(a)(b)
-}
-
-class EMGMTests extends FlatSpec {
-  import EMGM._
-  val unit = ()
-  "geq" should "work" in {
-    assert(geq(unit, unit))
-  }
-
-  it should "support empty lists" in {
-    assert(geq(List.empty: List[Unit], List.empty))
-  }
-
-  it should "support non-empty lists" in {
-    assert(geq(List(1, 2, 3), List(1, 2, 3)))
-    assert(!geq(List(1, 2, 3), List(1, 2, 4)))
-    assert(geq(List(unit, unit), List(unit, unit)))
-    assert(!geq(List(unit), List(unit, unit)))
-  }
-
-  it should "support numbers" in {
-    assert(geq(42, 42))
-    assert(!geq(42, 7))
-  }
-  it should "support chars" in {
-    assert(geq('4', '4'))
-    assert(!geq('4', '2'))
-  }
-  it should "support strings" in {
-    assert(geq("42", "42"))
-    assert(!geq("42", "7"))
-  }
-  it should "support heterogeneous pairs" in {
-    assert(geq(("42", 7), ("42", 7)))
-    assert(!geq(("42", 7), ("7", 7)))
-    assert(!geq(("42", 7), ("42", 42)))
-  }
-  it should "support homogeneous pairs" in {
-    assert(geq(("42", "7"), ("42", "7")))
-    assert(!geq(("42", "7"), ("7", "7")))
-    assert(!geq(("42", "7"), ("42", "42")))
-  }
 }
