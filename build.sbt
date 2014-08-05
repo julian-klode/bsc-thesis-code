@@ -32,6 +32,9 @@ initialCommands := Seq(
 ).mkString(";")
 
 libraryDependencies ++= Seq(
-  "org.scalatest" % "scalatest_2.11" % "2.2.0",
-  "com.chuusai" %% "shapeless" % "2.0.0"
+  "org.scalatest" %% "scalatest" % "2.2.0",
+  "com.chuusai" % "shapeless" % "2.0.0" cross  CrossVersion.fullMapped {
+    case "2.10.4" => "2.10.4"
+    case "2.11.1" => "2.11"
+  }
 )
