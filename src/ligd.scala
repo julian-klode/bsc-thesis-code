@@ -32,7 +32,7 @@ import scala.language.higherKinds
  */
 object LIGD {
 
-  def geq[A](a: A, b: A)(implicit rep: Rep[A]): Boolean = (rep, a, b) match {
+  def geq[A: Rep](a: A, b: A): Boolean = (rep[A], a, b) match {
     case (RUnit, (), ())                      ⇒ true
     case (RBoolean, a, b)                     ⇒ a == b
     case (RInt, a, b)                         ⇒ a == b
@@ -63,8 +63,8 @@ object LIGD {
   case class RSum[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[Either[A, B]]
   case class RProd[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[(A, B)]
 
-  implicit def rSum[A, B](implicit a: Rep[A], b: Rep[B]): Rep[Either[A, B]] = RSum(a, b)
-  implicit def rProd[A, B](implicit a: Rep[A], b: Rep[B]): Rep[(A, B)] = RProd(a, b)
+  implicit def rSum[A: Rep, B: Rep]: Rep[Either[A, B]] = RSum(rep[A], rep[B])
+  implicit def rProd[A: Rep, B: Rep]: Rep[(A, B)] = RProd(rep[A], rep[B])
 
   /**
    * Represent any type
@@ -89,7 +89,7 @@ object LIGD {
   }
 
   /** A small factory to make conversions easier */
-  def rType[C, B](from: B ⇒ C, to: C ⇒ B)(implicit rc: Rep[C]): RType[C, B] = RType(rc, EP(from, to))
+  def rType[C: Rep, B](from: B ⇒ C, to: C ⇒ B): RType[C, B] = RType(rep[C], EP(from, to))
 
   /** Isomorphism for converting between types */
   sealed case class EP[B, C](val from: B ⇒ C, val to: C ⇒ B)
@@ -118,7 +118,7 @@ object LIGD {
     }
   }
 
-  implicit def rList[A](implicit ra: Rep[A]): Rep[List[A]] = RList(ra)
+  implicit def rList[A: Rep]: Rep[List[A]] = RList(rep[A])
 
   /**
    * Usage: gfoldl(fun: (A, N) => A)(unit: A)(container: C)
@@ -130,12 +130,12 @@ object LIGD {
    * Type notes: A means accumulator, C means container, N means needle
    *
    */
-  def gfoldl[A, C, N](fun: (A, N) ⇒ A)(unit: A)(c: C)(implicit rep: Rep[C], rn: Rep[N]): A = (rep, c) match {
-    case (r, v) if r == rn        ⇒ fun(unit, v.asInstanceOf[N])
-    case (RSum(ra, rb), Left(x))  ⇒ gfoldl(fun)(unit)(x)(ra, rn)
-    case (RSum(ra, rb), Right(x)) ⇒ gfoldl(fun)(unit)(x)(rb, rn)
-    case (RProd(ra, rb), (x, y))  ⇒ gfoldl(fun)(gfoldl(fun)(unit)(x)(ra, rn))(y)(rb, rn)
-    case (r: RType[_, C], t1)     ⇒ gfoldl(fun)(unit)(r.b.from(t1))(r.a, rn)
+  def gfoldl[A, C: Rep, N: Rep](fun: (A, N) ⇒ A)(unit: A)(c: C): A = (rep[C], c) match {
+    case (r, v) if r == rep[N]    ⇒ fun(unit, v.asInstanceOf[N])
+    case (RSum(ra, rb), Left(x))  ⇒ gfoldl(fun)(unit)(x)(ra, rep[N])
+    case (RSum(ra, rb), Right(x)) ⇒ gfoldl(fun)(unit)(x)(rb, rep[N])
+    case (RProd(ra, rb), (x, y))  ⇒ gfoldl(fun)(gfoldl(fun)(unit)(x)(ra, rep[N]))(y)(rb, rep[N])
+    case (r: RType[_, C], t1)     ⇒ gfoldl(fun)(unit)(r.b.from(t1))(r.a, rep[N])
     case _                        ⇒ unit
   }
 
@@ -149,20 +149,20 @@ object LIGD {
    * Type notes: A means accumulator, C means container, N means needle
    *
    */
-  def gfoldr[A, C, N](fun: (N, A) ⇒ A)(unit: A)(c: C)(implicit rep: Rep[C], rn: Rep[N]): A = (rep, c) match {
-    case (r, v) if r == rn        ⇒ fun(v.asInstanceOf[N], unit)
-    case (RSum(ra, rb), Left(x))  ⇒ gfoldr(fun)(unit)(x)(ra, rn)
-    case (RSum(ra, rb), Right(x)) ⇒ gfoldr(fun)(unit)(x)(rb, rn)
-    case (RProd(ra, rb), (x, y))  ⇒ gfoldr(fun)(gfoldr(fun)(unit)(y)(rb, rn))(x)(ra, rn)
-    case (r: RType[_, C], t1)     ⇒ gfoldr(fun)(unit)(r.b.from(t1))(r.a, rn)
+  def gfoldr[A, C: Rep, N: Rep](fun: (N, A) ⇒ A)(unit: A)(c: C): A = (rep[C], c) match {
+    case (r, v) if r == rep[N]    ⇒ fun(v.asInstanceOf[N], unit)
+    case (RSum(ra, rb), Left(x))  ⇒ gfoldr(fun)(unit)(x)(ra, rep[N])
+    case (RSum(ra, rb), Right(x)) ⇒ gfoldr(fun)(unit)(x)(rb, rep[N])
+    case (RProd(ra, rb), (x, y))  ⇒ gfoldr(fun)(gfoldr(fun)(unit)(y)(rb, rep[N]))(x)(ra, rep[N])
+    case (r: RType[_, C], t1)     ⇒ gfoldr(fun)(unit)(r.b.from(t1))(r.a, rep[N])
     case _                        ⇒ unit
   }
 
   /** Simple foldl, like scala's foldLeft */
-  def foldl[A, C[_], N](c: C[N])(unit: A)(fun: (A, N) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldl(fun)(unit)(c)(rep, rn)
+  def foldl[A, C[_], N](c: C[N])(unit: A)(fun: (A, N) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldl(fun)(unit)(c)
 
   /** Simple foldr, like scala's foldRight */
-  def foldr[A, C[_], N](c: C[N])(unit: A)(fun: (N, A) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldr(fun)(unit)(c)(rep, rn)
+  def foldr[A, C[_], N](c: C[N])(unit: A)(fun: (N, A) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldr(fun)(unit)(c)
 
   /**
    * Find all instances of a given type in an object.
@@ -171,9 +171,9 @@ object LIGD {
    * @param c The containing object we are searching in
    * @param rc (Implicit) Representation of c
    */
-  def findAll[N, C](rn: Rep[N])(c: C)(implicit rc: Rep[C]) = gfoldr(
+  def findAll[N, C: Rep](rn: Rep[N])(c: C) = gfoldr(
     (x: N, xs: List[N]) ⇒ x :: xs
-  )(List.empty)(c)(rc, rn)
+  )(List.empty)(c)(rep[C], rn)
 
   /**
    * A generic sum that can sum both integers and floats (and products
@@ -181,8 +181,8 @@ object LIGD {
    * @param rt The representation of T values we want to build sums of
    * @param c  The container containing (or not) or T values
    */
-  def gSum[T, C](rt: Rep[T], c: C)(implicit rep: Rep[C]): T = {
-    gfoldl(add(rt))(zero(rt))(c)(rep, rt)
+  def gSum[T, C: Rep](rt: Rep[T], c: C): T = {
+    gfoldl(add(rt))(zero(rt))(c)(rep[C], rt)
   }
 
   /**
@@ -204,7 +204,7 @@ object LIGD {
   }
 
   /** Helper for sumOf: Return a zero value */
-  def zero[T: Rep]: T = implicitly[Rep[T]] match {
+  def zero[T: Rep]: T = rep[T] match {
     case RInt          ⇒ 0
     case RFloat        ⇒ 0F
     case RProd(ra, rb) ⇒ (zero(ra), zero(rb))
@@ -218,6 +218,9 @@ object LIGD {
   /** Find the minimum integer in a container of integers */
   def minInt[C[_]](c: C[Int])(implicit rep: Rep[C[Int]]): Option[Int] = gMinInt(c)(rep)
 
+  /** A small helper to get the implicit representation of a type */
+  def rep[T: Rep] = implicitly[Rep[T]]
+
   /**
    * Apply a transformation to all objects of N in c.
    *
@@ -227,12 +230,12 @@ object LIGD {
    * @param fun Transformation to apply
    * @param c Object to apply to
    */
-  def everywhere[N, C](fun: N ⇒ N)(c: C)(implicit rep: Rep[C], rn: Rep[N]): C = (rep, c) match {
-    case (r, v) if r == rn        ⇒ fun(v.asInstanceOf[N]).asInstanceOf[C]
-    case (RSum(ra, rb), Left(x))  ⇒ Left(everywhere(fun)(x)(ra, rn))
-    case (RSum(ra, rb), Right(x)) ⇒ Right(everywhere(fun)(x)(rb, rn))
-    case (RProd(ra, rb), (x, y))  ⇒ (everywhere(fun)(x)(ra, rn), everywhere(fun)(y)(rb, rn))
-    case (r: RType[_, C], t1)     ⇒ r.b.to(everywhere(fun)(r.b.from(t1))(r.a, rn))
+  def everywhere[C: Rep, N: Rep](fun: N ⇒ N)(c: C): C = (rep[C], c) match {
+    case (r, v) if r == rep[N]    ⇒ fun(v.asInstanceOf[N]).asInstanceOf[C]
+    case (RSum(ra, rb), Left(x))  ⇒ Left(everywhere(fun)(x)(ra, rep[N]))
+    case (RSum(ra, rb), Right(x)) ⇒ Right(everywhere(fun)(x)(rb, rep[N]))
+    case (RProd(ra, rb), (x, y))  ⇒ (everywhere(fun)(x)(ra, rep[N]), everywhere(fun)(y)(rb, rep[N]))
+    case (r: RType[_, C], t1)     ⇒ r.b.to(everywhere(fun)(r.b.from(t1))(r.a, rep[N]))
     case (r, v)                   ⇒ v
   }
 }
