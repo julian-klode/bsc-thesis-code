@@ -82,6 +82,7 @@ class LIGDCompanyTests extends FlatSpec {
   }
   "salary" should "be increased by 10%" in {
     assert(geq(incSalary(genCom, 10), expCom))
+    assert(geq(everywhere((i: Salary) ⇒ Salary(i.salary * 1.1F))(genCom), expCom))
   }
 
   "gfoldl2" should "work" in {

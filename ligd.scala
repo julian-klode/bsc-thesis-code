@@ -219,6 +219,24 @@ object LIGD {
   def gMinInt[C](c: C)(implicit rep: Rep[C]): Option[Int] = gfoldl(_minOrNone)(None)(c)
   /** Find the minimum integer in a container of integers */
   def minInt[C[_]](c: C[Int])(implicit rep: Rep[C[Int]]): Option[Int] = gMinInt(c)(rep)
+
+  /**
+   * Apply a transformation to all objects of N in c.
+   *
+   * This is similar to everywhere in SYB or Uniplate. And nope, our Haskell
+   * pals can't do this with their LIGD.
+   *
+   * @param fun Transformation to apply
+   * @param c Object to apply to
+   */
+  def everywhere[N, C](fun: N ⇒ N)(c: C)(implicit rep: Rep[C], rn: Rep[N]): C = (rep, c) match {
+    case (r, v) if r == rn        ⇒ fun(v.asInstanceOf[N]).asInstanceOf[C]
+    case (RSum(ra, rb), Left(x))  ⇒ Left(everywhere(fun)(x)(ra, rn))
+    case (RSum(ra, rb), Right(x)) ⇒ Right(everywhere(fun)(x)(rb, rn))
+    case (RProd(ra, rb), (x, y))  ⇒ (everywhere(fun)(x)(ra, rn), everywhere(fun)(y)(rb, rn))
+    case (r: RType[_, C], t1)     ⇒ r.b.to(everywhere(fun)(r.b.from(t1))(r.a, rn))
+    case (r, v)                   ⇒ v
+  }
 }
 
 /**
