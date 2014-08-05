@@ -23,6 +23,14 @@ scalaVersion := "2.11.1"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
+initialCommands := Seq(
+  "import LIGD._",
+  "import LIGDCompany._",
+  "import CompanyData._",
+  "import EMGM._",
+  "import shapeless._"
+).mkString(";")
+
 libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.11" % "2.2.0",
   "com.chuusai" %% "shapeless" % "2.0.0"
