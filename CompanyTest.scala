@@ -29,9 +29,9 @@ object LIGDCompany {
   implicit case object RSalary extends RType[Float, Salary](RFloat, EP(toFloat, fromFloat))
 
   /* The simple one or two element types */
-  implicit def rPerson = rType(Person.unapply(_: Person).get, (Person.apply _).tupled)
-  implicit def rEmployee = rType(Employee.unapply(_: Employee).get, (Employee.apply _).tupled)
-  implicit def rCompany = rType(Company.unapply(_: Company).get, Company.apply)
+  implicit val rPerson = rType(Person.unapply(_: Person).get, (Person.apply _).tupled)
+  implicit val rEmployee = rType(Employee.unapply(_: Employee).get, (Employee.apply _).tupled)
+  implicit val rCompany = rType(Company.unapply(_: Company).get, Company.apply)
 
   /* Mutually recursive types, require annotation, also need to break loop */
   implicit def rDUnit: RType[Either[Dept, Employee], DUnit] = RType(RSum(rDept, rEmployee),
