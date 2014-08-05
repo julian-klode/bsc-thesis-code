@@ -81,8 +81,8 @@ object LIGD {
 
     /* Will stack overflow on infinite types, but better than nothing */
     override def equals(obj: Any): Boolean = obj match {
-      case RType(c1, ep1) ⇒ c1 == c
-      case _              ⇒ false
+      case t @ RType(c1, ep1) ⇒ (this eq t) || c1 == c
+      case _                  ⇒ false
     }
   }
   object RType {
