@@ -43,7 +43,7 @@ object LIGDCompany {
   )
 
   /** Example: Summing all the salaries in a data structure */
-  def sumSalaryOld[A](a: A)(implicit rep: Rep[A]): Float = (rep, a) match {
+  def sumSalaryOld[A: Rep](a: A): Float = (rep[A], a) match {
     case (RSum(ra, rb), Left(a))   ⇒ sumSalaryOld(a)(ra)
     case (RSum(ra, rb), Right(b))  ⇒ sumSalaryOld(b)(rb)
     case (RProd(ra, rb), (a, b))   ⇒ sumSalaryOld(a)(ra) + sumSalaryOld(b)(rb)
@@ -55,7 +55,7 @@ object LIGDCompany {
   }
 
   /** Example: Increasing all the salaries in a data structure */
-  def incSalary[A](a: A, by: Float)(implicit rep: Rep[A]): A = (rep, a) match {
+  def incSalary[A: Rep](a: A, by: Float): A = (rep[A], a) match {
     case (RSum(ra, rb), Left(a))   ⇒ Left(incSalary(a, by)(ra))
     case (RSum(ra, rb), Right(b))  ⇒ Right(incSalary(b, by)(rb))
     case (RProd(ra, rb), (a, b))   ⇒ (incSalary(a, by)(ra), incSalary(b, by)(rb))
