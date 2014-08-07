@@ -44,6 +44,7 @@ trait EMGM {
     def constr[A]: Symbol ⇒ Int ⇒ G[A] ⇒ G[A] = (name ⇒ arity ⇒ arg ⇒ arg)
     def char: G[Char]
     def int: G[Int]
+    def float: G[Float]
     def string: G[String]
     def view[A, B]: Iso[B, A] ⇒ (⇒ G[A]) ⇒ G[B]
   }
@@ -69,6 +70,9 @@ trait EMGM {
   }
   implicit def RInt = new Rep[Int] {
     override def rep[G[_]](implicit g: Generic[G]): G[Int] = g.int
+  }
+  implicit def RFloat = new Rep[Float] {
+    override def rep[G[_]](implicit g: Generic[G]): G[Float] = g.float
   }
 
   /**
@@ -101,12 +105,14 @@ trait EMGM {
 
     override def char = Encode(encodeChar)
     override def int = Encode(encodeInt)
+    override def float = Encode(encodeFloat)
     override def string = Encode(encodeString)
     override def view[A, B] = iso ⇒ a ⇒ Encode(x ⇒ a.encodeS(iso.from(x)))
   }
 
   /* Stubs */
   def encodeInt(i: Int) = List(true)
+  def encodeFloat(i: Float) = List(true)
   def encodeChar(c: Char) = List(false)
   def encodeString(c: String) = List(false)
 
@@ -154,6 +160,7 @@ trait EMGM {
     override def prod[A, B] = a ⇒ b ⇒ Sum(x ⇒ a.sum(x._1) + b.sum(x._2))
     override def char = Sum(_ ⇒ 0)
     override def int = Sum((x: Int) ⇒ x)
+    override def float = Sum(_ ⇒ 0)
     override def string = Sum(_ ⇒ 0)
     override def view[A, B] = iso ⇒ a ⇒ Sum(x ⇒ a.sum(iso.from(x)))
   }
@@ -183,6 +190,7 @@ trait EMGM {
     )
     override def char = GEq(x ⇒ y ⇒ x == y)
     override def int = GEq(x ⇒ y ⇒ x == y)
+    override def float = GEq(x ⇒ y ⇒ x == y)
     override def string = GEq(x ⇒ y ⇒ x == y)
     override def view[A, B] = iso ⇒ a ⇒ GEq(x ⇒ y ⇒ a.geq(iso.from(x))(iso.from(y)))
   }
@@ -219,6 +227,10 @@ trait EMGM_sec_1_5 extends EMGM {
     def grep: G[Int] = g.int
   }
 
+  implicit def GRFloat[G[_]](implicit g: Generic[G]) = new GRep[G, Float] {
+    def grep: G[Float] = g.float
+  }
+
   implicit def GRSum[G[_], A, B](implicit g: Generic[G], a: GRep[G, A], b: GRep[G, B]) =
     new GRep[G, Either[A, B]] {
       override def grep: G[Either[A, B]] = g.plus(a.grep)(b.grep)
@@ -233,7 +245,7 @@ trait EMGM_sec_1_5 extends EMGM {
 
   // generic operation extended with an extra case for lists
   trait GenericList[G[_]] extends Generic[G] {
-    def list[A]: G[A] ⇒ G[List[A]]
+    def list[A]: G[A] ⇒ G[List[A]] = a ⇒ rList(a)(this)
   }
 
   // dispatcher for the extra `list` case
@@ -255,7 +267,7 @@ trait EMGM_sec_1_5 extends EMGM {
     // 2. Two empty lists are equal.
     // 3. Two nonempty lists of equal length are equal if all their
     //    elements are equal.
-    def list[A]: GEq[A] ⇒ GEq[List[A]] = eq ⇒ GEq { xs ⇒
+    override def list[A]: GEq[A] ⇒ GEq[List[A]] = eq ⇒ GEq { xs ⇒
       ys ⇒
         xs.length == ys.length && (
           xs.isEmpty ||
