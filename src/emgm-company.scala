@@ -76,29 +76,9 @@ object EMGMCompany {
     )
   }
 
-  case class GTransform[A](transform: A ⇒ A)
-  class MyGTransform extends GenericList[GTransform] {
-    override def unit = GTransform(x ⇒ x)
-    override def plus[A, B] = a ⇒ b ⇒ GTransform(x ⇒ x match {
-      case (Left(x))  ⇒ Left(a.transform(x))
-      case (Right(x)) ⇒ Right(b.transform(x))
-    })
-
-    override def prod[A, B] = a ⇒ b ⇒ GTransform(x ⇒ (a.transform(x._1),
-      b.transform(x._2)))
-    override def char = GTransform(x ⇒ x)
-    override def int = GTransform(x ⇒ x)
-    override def float = GTransform(x ⇒ x)
-    override def string = GTransform(x ⇒ x)
-    /* Optional, does not matter */
-    override def list[A] = a ⇒ GTransform(xs ⇒ xs.map(a.transform))
-    override def view[A, B] = iso ⇒ a ⇒ GTransform(x ⇒ iso.to(a.transform(iso.from(x))))
-  }
-
   implicit object MyGTransformSalary extends MyGTransform with GenericSalary[GTransform] {
     override def salary = GTransform((x: Salary) ⇒ Salary(x.salary * 110 / 100))
   }
-
   /* TODO: How can get a percentage parameter here, like in EMGMCompany ? */
   def incSalary[T](a: T)(implicit r: GRep[GTransform, T]): T =
     r.grep.transform(a)

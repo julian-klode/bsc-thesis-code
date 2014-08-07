@@ -19,6 +19,7 @@
 object Main {
   import CompanyData._
   import LIGDCompany._
+  import EMGMCompany._
   import shapeless.poly._
 
   object incS extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))

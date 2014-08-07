@@ -278,6 +278,26 @@ trait EMGM_sec_1_5 extends EMGM {
   def geqList[T](a: T, b: T)(implicit r: GRep[GEq, T]): Boolean =
     r.grep.geq(a)(b)
 
+  case class GTransform[A](transform: A ⇒ A)
+  trait MyGTransform extends Generic[GTransform] {
+    override def unit = GTransform(x ⇒ x)
+    override def plus[A, B] = a ⇒ b ⇒ GTransform(x ⇒ x match {
+      case (Left(x))  ⇒ Left(a.transform(x))
+      case (Right(x)) ⇒ Right(b.transform(x))
+    })
+
+    override def prod[A, B] = a ⇒ b ⇒ GTransform(x ⇒ (a.transform(x._1),
+      b.transform(x._2)))
+    override def char = GTransform(x ⇒ x)
+    override def int = GTransform(x ⇒ x)
+    override def float = GTransform(x ⇒ x)
+    override def string = GTransform(x ⇒ x)
+    override def view[A, B] = iso ⇒ a ⇒ GTransform(x ⇒ iso.to(a.transform(iso.from(x))))
+  }
+
+  trait MyGTransformList extends MyGTransform with GenericList[GTransform] {
+    override def list[A] = a ⇒ GTransform(xs ⇒ xs.map(a.transform))
+  }
   // demonstrating EMGM as a solution to the "expression problem"
   // would be interesting. see Oliveira, Hinze & Loeh, sec. 1.6.1
 }
