@@ -298,8 +298,82 @@ trait EMGM_sec_1_5 extends EMGM {
   trait MyGTransformList extends MyGTransform with GenericList[GTransform] {
     override def list[A] = a ⇒ GTransform(xs ⇒ xs.map(a.transform))
   }
+
+  /* Calculation of a sum */
+  case class GSum[N](gsum: N ⇒ Int ⇒ Int)
+  implicit object MySum extends GenericList[GSum] {
+    override def unit = GSum(n ⇒ r ⇒ r)
+    override def plus[A, B] = a ⇒ b ⇒ GSum(x ⇒ r ⇒ x match {
+      case (Left(v))  ⇒ a.gsum(v)(r)
+      case (Right(v)) ⇒ b.gsum(v)(r)
+    })
+
+    override def prod[A, B] = a ⇒ b ⇒ GSum(x ⇒ r ⇒ b.gsum(x._2)(a.gsum(x._1)(r)))
+
+    override def char = GSum(x ⇒ r ⇒ r)
+    override def int = GSum(x ⇒ r ⇒ x + r)
+    override def float = GSum(x ⇒ r ⇒ r)
+    override def string = GSum(x ⇒ r ⇒ r)
+    override def view[A, B] = iso ⇒ a ⇒ GSum(x ⇒ r ⇒ a.gsum(iso.from(x))(r))
+  }
+
+  def sum[C](a: C)(implicit r: GRep[GSum, C]): Int = {
+    r.grep.gsum(a)(0)
+  }
+
+  /* Calculation of a minimum */
+  case class GMin[N](gmin: N ⇒ Int ⇒ Int)
+  implicit object MyMin extends GenericList[GMin] {
+    override def unit = GMin(n ⇒ r ⇒ r)
+    override def plus[A, B] = a ⇒ b ⇒ GMin(x ⇒ r ⇒ x match {
+      case (Left(v))  ⇒ a.gmin(v)(r)
+      case (Right(v)) ⇒ b.gmin(v)(r)
+    })
+
+    override def prod[A, B] = a ⇒ b ⇒ GMin(x ⇒ r ⇒ b.gmin(x._2)(a.gmin(x._1)(r)))
+
+    override def char = GMin(x ⇒ r ⇒ r)
+    override def int = GMin(x ⇒ r ⇒ scala.math.min(x, r))
+    override def float = GMin(x ⇒ r ⇒ r)
+    override def string = GMin(x ⇒ r ⇒ r)
+    override def view[A, B] = iso ⇒ a ⇒ GMin(x ⇒ r ⇒ a.gmin(iso.from(x))(r))
+  }
+
+  def min[C](a: C)(implicit r: GRep[GMin, C]): Int = {
+    r.grep.gmin(a)(0)
+  }
+
+  /*
+   * Generic folding
+   *
+   * This does not work obviously. The idea would be (IMO) to subclass the
+   * folding trait for every specific operation. But this won't work well,
+   * it seems.
+   */
+  trait Apply1Of2[T[_, _], A] {
+    type Apply[B] = T[A, B]
+  }
+
+  case class GFold[R, N](gfold: N ⇒ R ⇒ R)
+  trait MyFold[R] extends GenericList[Apply1Of2[GFold, R]#Apply] {
+    override def unit = GFold(n ⇒ r ⇒ r)
+    override def plus[A, B] = a ⇒ b ⇒ GFold(x ⇒ r ⇒ x match {
+      case (Left(v))  ⇒ a.gfold(v)(r)
+      case (Right(v)) ⇒ b.gfold(v)(r)
+    })
+
+    override def prod[A, B] = a ⇒ b ⇒ GFold(x ⇒ r ⇒ b.gfold(x._2)(a.gfold(x._1)(r)))
+
+    override def char = GFold(x ⇒ r ⇒ r)
+    override def int = GFold(x ⇒ r ⇒ r)
+    override def float = GFold(x ⇒ r ⇒ r)
+    override def string = GFold(x ⇒ r ⇒ r)
+    override def view[A, B] = iso ⇒ a ⇒ GFold(x ⇒ r ⇒ a.gfold(iso.from(x))(r))
+  }
+
   // demonstrating EMGM as a solution to the "expression problem"
   // would be interesting. see Oliveira, Hinze & Loeh, sec. 1.6.1
+
 }
 
 object EMGM extends EMGM with EMGM_sec_1_5

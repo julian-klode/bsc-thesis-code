@@ -55,6 +55,7 @@ object Main {
   def min(lib: L.Value) = lib match {
     case L.None   ⇒ Some(0)
     case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(scala.math.min))
+    case L.EMGM   ⇒ Some(EMGM.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(scala.math.min))
     case _        ⇒ None
   }
@@ -62,6 +63,7 @@ object Main {
     case L.None   ⇒ Some(72)
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(_ + _))
     case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(_ + _))
+    case L.EMGM   ⇒ Some(EMGM.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
     case _        ⇒ None
   }
 
