@@ -38,6 +38,16 @@ class LIGDCompanyTests extends FlatSpec {
   }
 }
 
+class EMGMCompanyTests extends FlatSpec {
+  import EMGM._
+  import CompanyData._
+  import EMGMCompany._
+
+  "salary" should "be increased by 10%" in {
+    assert(incSalary(genCom) == expCom)
+  }
+
+}
 class ShapelessCompanyTests extends FlatSpec {
   import shapeless._
   import poly._
