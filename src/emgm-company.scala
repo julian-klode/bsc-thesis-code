@@ -31,29 +31,20 @@ import CompanyData._
  */
 object EMGMCompany {
 
-  implicit def GRPerson[G[_]](implicit g: Generic[G]): GRep[G, Person] = new GRep[G, Person] {
-    override def grep = g.view(Iso(Person.unapply(_: Person).get, (Person.apply _).tupled))(
-      g.prod(g.string)(g.string)
-    )
-  }
-
-  trait GenericSalary[G[_]] extends GenericList[G] {
+  /**
+   * Let's define all types of the module here, this makes it easier to
+   * read and allows more ad-hoc cases.
+   */
+  trait GenericCompany[G[_]] extends GenericList[G] {
+    def dept: G[Dept] = view(iso)(prod(string)(prod(employee)(list(dunit))))
+    def person = view(Iso(Person.unapply(_: Person).get, (Person.apply _).tupled))(prod(string)(string))
+    def employee = view(Iso(Employee.unapply(_: Employee).get, (Employee.apply _).tupled))(prod(person)(salary))
+    def company = view(Iso(Company.unapply(_: Company).get, Company.apply))(list(dept))
+    def dunit = view(iso1)(plus(dept)(employee))
     def salary: G[Salary] = view(Iso(
       (s: Salary) ⇒ s.salary,
       (s: Float) ⇒ Salary(s)
     ))(constr('Salary)(1)(float))
-  }
-
-  implicit def GREmployee[G[_]](implicit g: GenericSalary[G]): GRep[G, Employee] = new GRep[G, Employee] {
-    override def grep = g.view(Iso(Employee.unapply(_: Employee).get, (Employee.apply _).tupled))(
-      g.prod(GRPerson(g).grep)(g.salary)
-    )
-  }
-
-  implicit def GRCompany[G[_]](implicit g: GenericSalary[G]): GRep[G, Company] = new GRep[G, Company] {
-    override def grep = g.view(Iso(Company.unapply(_: Company).get, Company.apply))(
-      GRList[G, Dept].grep
-    )
   }
 
   def iso1: Iso[DUnit, Either[Dept, Employee]] = Iso((_: DUnit) match {
@@ -61,26 +52,37 @@ object EMGMCompany {
     case DU(dept) ⇒ Left(dept)
   }, (_: Either[Dept, Employee]).fold(DU, PU))
 
-  implicit def GRDUnit[G[_]](implicit g: GenericSalary[G]): GRep[G, DUnit] = new GRep[G, DUnit] {
-    override def grep = g.view(iso1)(g.plus(GRDept(g).grep)(GREmployee(g).grep))
-  }
-
   def iso: Iso[Dept, (String, (Manager, List[DUnit]))] = Iso(
     (d: Dept) ⇒ (d.name, (d.manager, d.units)),
     (e: (String, (Manager, List[DUnit]))) ⇒ Dept(e._1, e._2._1, e._2._2)
   )
 
-  implicit def GRDept[G[_]](implicit g: GenericSalary[G]): GRep[G, Dept] = new GRep[G, Dept] {
-    override def grep = g.view(iso)(
-      g.prod(g.string)(g.prod(GREmployee(g).grep)(GRList[G, DUnit](g, GRDUnit(g)).grep))
-    )
+  /* Boilerplate */
+  implicit def GRPerson[G[_]](implicit g: GenericCompany[G]) = new GRep[G, Person] {
+    override def grep = g.person
+  }
+  implicit def GREmployee[G[_]](implicit g: GenericCompany[G]) = new GRep[G, Employee] {
+    override def grep = g.employee
+  }
+  implicit def GRCompany[G[_]](implicit g: GenericCompany[G]) = new GRep[G, Company] {
+    override def grep = g.company
+  }
+  implicit def GRDUnit[G[_]](implicit g: GenericCompany[G]) = new GRep[G, DUnit] {
+    override def grep = g.dunit
+  }
+  implicit def GRDept[G[_]](implicit g: GenericCompany[G]) = new GRep[G, Dept] {
+    override def grep = g.dept
   }
 
-  implicit object MyGTransformSalary extends MyGTransform with GenericSalary[GTransform] {
+  /* The incSalary function */
+  implicit object MyGTransformSalary extends MyGTransform with GenericCompany[GTransform] with MyGTransformList {
     override def salary = GTransform((x: Salary) ⇒ Salary(x.salary * 110 / 100))
   }
   /* TODO: How can get a percentage parameter here, like in EMGMCompany ? */
   def incSalary[T](a: T)(implicit r: GRep[GTransform, T]): T =
     r.grep.transform(a)
 
+  /* WTF ? Even more boilerplate. I want geqList to just work, it needs to
+   * know nothing about company stuff. */
+  implicit object GEqCompany extends MyGEq with GenericCompany[GEq]
 }

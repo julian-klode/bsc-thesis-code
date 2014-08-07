@@ -45,6 +45,7 @@ class EMGMCompanyTests extends FlatSpec {
 
   "salary" should "be increased by 10%" in {
     assert(incSalary(genCom) == expCom)
+    assert(geqList(genCom, genCom))
   }
 
 }
