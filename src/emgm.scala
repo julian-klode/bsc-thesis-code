@@ -167,23 +167,23 @@ object EMGM {
    * EXAMPLE: Generic equality
    */
 
-  case class GEq[A](equals: A ⇒ A ⇒ Boolean)
+  case class GEq[A](geq: A ⇒ A ⇒ Boolean)
 
   class MyGEq extends Generic[GEq] {
     override def unit = GEq(x ⇒ y ⇒ true)
     override def plus[A, B] = a ⇒ b ⇒ GEq(x ⇒ y ⇒ (x, y) match {
-      case (Left(x), Left(y))   ⇒ a.equals(x)(y)
-      case (Right(x), Right(y)) ⇒ b.equals(x)(y)
+      case (Left(x), Left(y))   ⇒ a.geq(x)(y)
+      case (Right(x), Right(y)) ⇒ b.geq(x)(y)
       case (_, _)               ⇒ false
     })
     override def prod[A, B] = a ⇒ b ⇒ GEq(x ⇒ y ⇒
-      a.equals(x._1)(y._1) && b.equals(x._2)(y._2)
+      a.geq(x._1)(y._1) && b.geq(x._2)(y._2)
     )
     override def char = GEq(x ⇒ y ⇒ x == y)
     override def int = GEq(x ⇒ y ⇒ x == y)
     override def string = GEq(x ⇒ y ⇒ x == y)
-    override def view[A, B] = iso ⇒ a ⇒ GEq(x ⇒ y ⇒ a.equals(iso.from(x))(iso.from(y)))
+    override def view[A, B] = iso ⇒ a ⇒ GEq(x ⇒ y ⇒ a.geq(iso.from(x))(iso.from(y)))
   }
 
-  def geq[T](a: T, b: T)(implicit r: Rep[T]): Boolean = r.rep(new MyGEq).equals(a)(b)
+  def geq[T](a: T, b: T)(implicit r: Rep[T]): Boolean = r.rep(new MyGEq).geq(a)(b)
 }
