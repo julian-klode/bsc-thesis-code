@@ -19,7 +19,7 @@ scalaSource in Compile := baseDirectory.value / "src"
 scalaSource in Test := baseDirectory.value / "tests"
 
 
-scalaVersion := "2.11.1"
+scalaVersion := "2.11.2"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
@@ -36,5 +36,6 @@ libraryDependencies ++= Seq(
   "com.chuusai" % "shapeless" % "2.0.0" cross  CrossVersion.fullMapped {
     case "2.10.4" => "2.10.4"
     case "2.11.1" => "2.11"
+    case "2.11.2" => "2.11"
   }
 )
