@@ -74,17 +74,15 @@ object Main {
 
   def time[A](a: ⇒ A) = {
     val n = 300000
-    var times: Long = 0
     /* JIT compile */
     for (_ ← 1 to n) {
       val res = a
     }
+    var time: Long = System.nanoTime
     for (_ ← 1 to n) {
-      val now = System.nanoTime
       val res = a
-      times += (System.nanoTime - now)
     }
-    val result = times / n
+    val result = (System.nanoTime - time) / n
     ("%d ns".format(result))
   }
 
