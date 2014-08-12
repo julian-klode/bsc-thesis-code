@@ -74,13 +74,6 @@ trait EMGM {
   implicit def RFloat = new Rep[Float] {
     override def rep[G[_]](implicit g: Generic[G]): G[Float] = g.float
   }
-
-  /**
-   * Thanks to Scala for Generic Programmers :). I did not figure out how to
-   * get the Rep[A] and Rep[B] stuff done, I tried to use case classes for
-   * implementing the Rep, which failed :(
-   */
-
   implicit def RSum[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
     override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
   }
