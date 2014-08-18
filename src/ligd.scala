@@ -238,4 +238,51 @@ object LIGD {
     case (r: RType[_, C], t1)     ⇒ r.b.to(everywhere(fun)(r.b.from(t1))(r.a, rep[N]))
     case (r, v)                   ⇒ v
   }
+
+  /**
+   * A function that returns a T and accepts any representable value.
+   *
+   * This represents the type of a first class generic function. This is
+   * the same type as: (forall u. Rep u => u -> t) in Haskell.
+   */
+  trait Returning[T] {
+    def apply[U: Rep](u: U): T
+  }
+
+  /**
+   * A generic show that we can pass around
+   */
+  object gshow extends Returning[String] {
+    override def apply[U: Rep](u: U): String = (rep[U], u) match {
+      case (RInt, i)                ⇒ i.toString()
+      case (RFloat, i)              ⇒ i.toString()
+      case (RBoolean, i)            ⇒ i.toString()
+      case (RString, i)             ⇒ i.toString()
+      case (RChar, i)               ⇒ i.toString()
+      case (RUnit, i)               ⇒ "()"
+      case (RSum(ra, rb), Left(x))  ⇒ "Left(" + gshow(x)(ra) + ")"
+      case (RSum(ra, rb), Right(x)) ⇒ "Right(" + gshow(x)(rb) + ")"
+      case (RProd(ra, rb), (a, b))  ⇒ "(" + gshow(a)(ra) + ", " + gshow(b)(rb) + ")"
+      case (RList(ra), Nil)         ⇒ "Nil"
+      case (RList(ra), x :: xs)     ⇒ gshow(x)(ra) + " :: " + gshow(xs)
+      case (r: RType[_, U], t1)     ⇒ gshow(r.b.from(t1))(r.a)
+      case (r, v)                   ⇒ throw new Exception("Should not happen")
+    }
+  }
+
+  /**
+   * Implementation of gmapQ, as known from SYB.
+   *
+   * This is a silly version, it only supports constructors of arrity 2. But
+   * it's enough to work on lists and show that generic functions can be used
+   * as first class arguments.
+   */
+  def gmapQ[C: Rep, T](fun: Returning[T])(c: C): List[T] = (rep[C], c) match {
+    case (RSum(ra, rb), Left(x))  ⇒ gmapQ(fun)(x)(ra)
+    case (RSum(ra, rb), Right(x)) ⇒ gmapQ(fun)(x)(rb)
+    case (RProd(ra, rb), (x, y))  ⇒ List(fun(x)(ra), fun(y)(rb))
+    case (r: RType[_, C], t1)     ⇒ gmapQ(fun)(r.b.from(t1))(r.a)
+    case (r, v)                   ⇒ List(fun(v)(r))
+  }
+
 }

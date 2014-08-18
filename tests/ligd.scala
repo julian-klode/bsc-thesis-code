@@ -90,4 +90,8 @@ class LIGDTests extends FlatSpec {
     assert(gfoldr(max)(111)(List(3, 6, 12, 4, 55, 11)) == 111)
     assert(gfoldr((a: Int, b: Int) ⇒ (a + b) / 2)(54)(List(12, 4, 10, 6)) == 12)
   }
+
+  "higher order functions" should "exist" in {
+    assert(gmapQ(gshow)(List(1, 2)) == List("1", "2 :: Nil"))
+  }
 }
