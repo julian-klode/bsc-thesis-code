@@ -245,15 +245,13 @@ object LIGD {
    * This represents the type of a first class generic function. This is
    * the same type as: (forall u. Rep u => u -> t) in Haskell.
    */
-  trait Returning[T] {
-    def apply[U: Rep](u: U): T
-  }
+  type Returning[T] = { def apply[A: Rep](a: A): T }
 
   /**
    * A generic show that we can pass around
    */
-  object gshow extends Returning[String] {
-    override def apply[U: Rep](u: U): String = (rep[U], u) match {
+  object gshow {
+    def apply[U: Rep](u: U): String = (rep[U], u) match {
       case (RInt, i)                ⇒ i.toString()
       case (RFloat, i)              ⇒ i.toString()
       case (RBoolean, i)            ⇒ i.toString()
