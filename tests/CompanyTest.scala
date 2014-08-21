@@ -43,6 +43,10 @@ class EMGMCompanyTests extends FlatSpec {
   import CompanyData._
   import EMGMCompany._
 
+  "sum" should "be 111000.0" in {
+    assert(geq(sumSalary(genCom), 111000.0F))
+  }
+
   "salary" should "be increased by 10%" in {
     assert(incSalary(genCom) == expCom)
     assert(geqList(genCom, genCom))

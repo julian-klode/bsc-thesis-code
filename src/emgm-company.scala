@@ -82,6 +82,26 @@ object EMGMCompany {
   def incSalary[T](a: T)(implicit r: GRep[GTransform, T]): T =
     r.grep.transform(a)
 
+  /* Calculation of a sum */
+  case class SalarySum[N](gsum: N ⇒ Float ⇒ Float)
+  implicit object MySalarySum extends GenericCompany[SalarySum] {
+    override def unit = SalarySum(n ⇒ r ⇒ r)
+    override def plus[A, B] = a ⇒ b ⇒ SalarySum(x ⇒ r ⇒ x match {
+      case (Left(v))  ⇒ a.gsum(v)(r)
+      case (Right(v)) ⇒ b.gsum(v)(r)
+    })
+    override def prod[A, B] = a ⇒ b ⇒ SalarySum(x ⇒ r ⇒ b.gsum(x._2)(a.gsum(x._1)(r)))
+    override def char = SalarySum(x ⇒ r ⇒ r)
+    override def int = SalarySum(x ⇒ r ⇒ r)
+    override def float = SalarySum(x ⇒ r ⇒ r)
+    override def string = SalarySum(x ⇒ r ⇒ r)
+    override def view[A, B] = iso ⇒ a ⇒ SalarySum(x ⇒ r ⇒ a.gsum(iso.from(x))(r))
+    override def salary = SalarySum(s ⇒ r ⇒ s.salary + r)
+  }
+  def sumSalary[C](a: C)(implicit r: GRep[SalarySum, C]): Float = {
+    r.grep.gsum(a)(0F)
+  }
+
   /* WTF ? Even more boilerplate. I want geqList to just work, it needs to
    * know nothing about company stuff. */
   implicit object GEqCompany extends MyGEq with GenericCompany[GEq]
