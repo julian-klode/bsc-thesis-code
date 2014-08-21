@@ -62,7 +62,6 @@ object LIGDExtensible {
         apply(a1, a2)(ra) && apply(b1, b2)(rb)
       case (r: RType[_, A], t1, t2) ⇒ apply(r.b.from(t1), r.b.from(t2))(r.a)
       case _                        ⇒ false
-
     }
   }
 
