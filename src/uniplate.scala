@@ -108,5 +108,10 @@ object UniPlate {
 
   /* A simple minimum */
   def minInt[C](self: C)(implicit bp: Biplate[C, Int]) =
-    universeBi(self).foldLeft(0)(scala.math.min)
+    universeBi(self).foldLeft(Int.MaxValue)(scala.math.min)
+
+  /** A biplate for lists of uniplates */
+  implicit def biplateList[A](implicit up: Uniplate[A]) = new Biplate[List[A], A] {
+    def biplate(self: List[A]) = (self, a ⇒ a)
+  }
 }

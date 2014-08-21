@@ -72,4 +72,10 @@ class UniplateTest extends FlatSpec {
     assert(variables(testList) == List("x", "y"))
   }
 
+  "minInt" should "return minimum" in {
+    assert(minInt(List(1, 2, 3)) == 1)
+    assert(minInt(List(1, 2, -3)) == -3)
+    assert(minInt(List[Int]()) == Int.MaxValue)
+  }
+
 }
