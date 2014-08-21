@@ -333,7 +333,7 @@ trait EMGM_sec_1_5 extends EMGM {
   }
 
   def min[C](a: C)(implicit r: GRep[GMin, C]): Int = {
-    r.grep.gmin(a)(0)
+    r.grep.gmin(a)(Int.MaxValue)
   }
 
   /*

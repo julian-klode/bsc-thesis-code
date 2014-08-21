@@ -99,4 +99,10 @@ class EMGMTests extends FlatSpec {
     assert(!geqList(("42", "7"), ("7", "7")))
     assert(!geqList(("42", "7"), ("42", "42")))
   }
+
+  "min" should "return minimum" in {
+    assert(min(List(1, 2, 3)) == 1)
+    assert(min(List(1, 2, -3)) == -3)
+    assert(min(List[Int]()) == Int.MaxValue)
+  }
 }
