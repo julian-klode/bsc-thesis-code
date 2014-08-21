@@ -285,4 +285,17 @@ object LIGD {
     case (r, v)                   ⇒ List(fun(v)(r))
   }
 
+  /**
+   * Simple straight forward minimum.
+   *
+   * Returns Int.MaxValue if no smaller integer is found.
+   */
+  def min[C: Rep](c: C): Int = (rep[C], c) match {
+    case (RSum(ra, rb), Left(x))  ⇒ min(x)(ra)
+    case (RSum(ra, rb), Right(x)) ⇒ min(x)(rb)
+    case (RProd(ra, rb), (x, y))  ⇒ scala.math.min(min(x)(ra), min(y)(rb))
+    case (r: RType[_, C], t1)     ⇒ min(r.b.from(t1))(r.a)
+    case (RInt, i)                ⇒ i
+    case _                        ⇒ Int.MaxValue
+  }
 }

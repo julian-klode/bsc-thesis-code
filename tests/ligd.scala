@@ -62,6 +62,12 @@ class LIGDTests extends FlatSpec {
     assert(!geq(("42", "7"), ("42", "42")))
   }
 
+  "min" should "return minimum" in {
+    assert(min(List(1, 2, 3)) == 1)
+    assert(min(List(1, 2, -3)) == -3)
+    assert(min(List[Int]()) == Int.MaxValue)
+  }
+
   "folding" should "have working gfoldl examples" in {
     val div = (_: Int) / (_: Int)
     val max = scala.math.max(_: Int, _: Int)
