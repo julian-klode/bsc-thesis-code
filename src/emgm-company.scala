@@ -78,7 +78,6 @@ object EMGMCompany {
   implicit object MyGTransformSalary extends MyGTransform with GenericCompany[GTransform] with MyGTransformList {
     override def salary = GTransform(x ⇒ Salary(x.salary * 110 / 100))
   }
-  /* TODO: How can get a percentage parameter here, like in EMGMCompany ? */
   def incSalary[T](a: T)(implicit r: GRep[GTransform, T]): T =
     r.grep.transform(a)
 
