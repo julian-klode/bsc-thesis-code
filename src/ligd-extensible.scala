@@ -66,6 +66,8 @@ object LIGDExtensible {
     }
   }
 
+  object geq extends geq
+
   /**
    * Extensibility works by overriding apply
    *
@@ -81,7 +83,5 @@ object LIGDExtensible {
     }
   }
 
-  /* Create objects that can be applied (like functions) */
-  object geq extends geq
   object geqlist extends geqlist
 }
