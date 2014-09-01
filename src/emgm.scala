@@ -234,8 +234,6 @@ trait EMGM_sec_1_5 extends EMGM {
       override def grep: G[(A, B)] = g.prod(a.grep)(b.grep)
     }
 
-  // TODO: GRView
-
   // generic operation extended with an extra case for lists
   trait GenericList[G[_]] extends Generic[G] {
     def list[A]: G[A] ⇒ G[List[A]] = a ⇒ rList(a)(this)
