@@ -77,9 +77,8 @@ object LIGD {
     lazy val a = c
     lazy val b = ep
 
-    /* Will stack overflow on infinite types, but better than nothing */
     override def equals(obj: Any): Boolean = obj match {
-      case t @ RType(c1, ep1) ⇒ (this eq t) || c1 == c
+      case t @ RType(c1, ep1) ⇒ (this eq t)
       case _                  ⇒ false
     }
   }
