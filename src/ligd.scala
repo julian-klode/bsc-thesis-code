@@ -46,7 +46,6 @@ object LIGD {
       geq(a1, a2)(ra) && geq(b1, b2)(rb)
     case (r: RType[_, A], t1, t2) ⇒ geq(r.b.from(t1), r.b.from(t2))(r.a)
     case _                        ⇒ false
-
   }
 
   /** Representation of types as GADTS. */
