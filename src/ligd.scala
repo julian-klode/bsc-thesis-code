@@ -76,6 +76,7 @@ object LIGD {
     lazy val a = c
     lazy val b = ep
   }
+
   object RType {
     def apply[C, B](a: ⇒ Rep[C], b: EP[B, C]): RType[C, B] = new RType(a, b)
     def unapply[C, B](sum: RType[C, B]) = Some(sum.a, sum.b)
