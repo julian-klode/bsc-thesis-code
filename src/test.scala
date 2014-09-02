@@ -53,10 +53,10 @@ object Main {
   }
 
   def min(lib: L.Value) = lib match {
-    case L.None   ⇒ Some(0)
-    case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(scala.math.min))
+    case L.None   ⇒ Some(1)
+    case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(Int.MaxValue)(scala.math.min))
     case L.EMGM   ⇒ Some(EMGM.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
-    case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(scala.math.min))
+    case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(Int.MaxValue)(scala.math.min))
     case _        ⇒ None
   }
   def sum(lib: L.Value) = lib match {
@@ -91,11 +91,15 @@ object Main {
     val Direct, None, Shapeless, LIGD, EMGM = Value
   }
 
+  val tests = List(
+    ("company", company _),
+    ("geq", geq _),
+    ("min", min _),
+    ("sum", sum _)
+  )
+
   def main(args: Array[String]) {
     assert(company(L.Direct).get == expCom)
-
-    val tests = List(("company", company _), ("geq", geq _), ("min", min _),
-      ("sum", sum _))
     printf("\\begin{tabular}{c")
     for (lib ← tests) {
       printf("|r")
