@@ -1,5 +1,5 @@
 /*
- * lidg.scala - Implementation of LIGD for Scala.
+ * test.scala - Main program / benchmark tests
  *
  * Copyright 2014 Julian Andres Klode <klode@mathematik.uni-marburg.de>
  *
@@ -21,7 +21,7 @@ import org.scalatest._
 class TestTest extends FlatSpec {
   import Main._
 
-  "libraries" should "pass all tests" in {
+  "benchmark implementations" should "produce expected results" in {
     for (lib ← L.values) {
       if (lib != L.None) {
         for ((testname, test) ← tests) {
