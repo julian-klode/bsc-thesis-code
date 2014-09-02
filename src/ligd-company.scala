@@ -28,19 +28,22 @@ object LIGDCompany {
   /* The simple one or two element types */
   implicit val rPerson = rType(Person.unapply(_: Person).get, (Person.apply _).tupled)
   implicit val rEmployee = rType(Employee.unapply(_: Employee).get, (Employee.apply _).tupled)
-  implicit val rCompany = rType(Company.unapply(_: Company).get, Company.apply)
 
-  /* Mutually recursive types, require annotation, also need to break loop */
-  implicit def rDUnit: RType[Either[Dept, Employee], DUnit] = RType(RSum(rDept, rEmployee),
+  /* Mutually recursive types: Require annotation and breaking the Rep cycle
+   * created by the non-lazy rType. */
+  implicit val rDUnit: RType[Either[Dept, Employee], DUnit] = RType(RSum(rDept, rEmployee),
     EP(_ match {
       case PU(per)  ⇒ Right(per)
       case DU(dept) ⇒ Left(dept)
     }, _.fold(DU, PU)))
 
-  implicit def rDept: RType[(String, (Manager, List[DUnit])), Dept] = rType(
+  implicit val rDept: RType[(String, (Manager, List[DUnit])), Dept] = rType(
     d ⇒ (d.name, (d.manager, d.units)),
     e ⇒ Dept(e._1, e._2._1, e._2._2)
   )
+
+  /* Scala forces this below rDept, otherwise rDept is undefined here */
+  implicit val rCompany = rType(Company.unapply(_: Company).get, Company.apply)
 
   /** Example: Summing all the salaries in a data structure */
   def sumSalaryOld[A: Rep](a: A): Float = (rep[A], a) match {
