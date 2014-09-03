@@ -62,6 +62,12 @@ trait EMGM {
   implicit def RString = new Rep[String] {
     override def rep[G[_]](implicit g: Generic[G]): G[String] = g.string
   }
+  implicit def RSum[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
+    override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
+  }
+  implicit def RProd[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[(A, B)] {
+    override def rep[G[_]](implicit g: Generic[G]): G[(A, B)] = g.prod(a.rep)(b.rep)
+  }
   implicit def RUnit = new Rep[Unit] {
     override def rep[G[_]](implicit g: Generic[G]): G[Unit] = g.unit
   }
@@ -73,12 +79,6 @@ trait EMGM {
   }
   implicit def RFloat = new Rep[Float] {
     override def rep[G[_]](implicit g: Generic[G]): G[Float] = g.float
-  }
-  implicit def RSum[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[Either[A, B]] {
-    override def rep[G[_]](implicit g: Generic[G]): G[Either[A, B]] = g.plus(a.rep)(b.rep)
-  }
-  implicit def RProd[A, B](implicit a: Rep[A], b: Rep[B]) = new Rep[(A, B)] {
-    override def rep[G[_]](implicit g: Generic[G]): G[(A, B)] = g.prod(a.rep)(b.rep)
   }
 
   /* ====================================================================
