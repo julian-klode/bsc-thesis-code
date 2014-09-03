@@ -134,11 +134,9 @@ object HLists {
    */
   case class Zipper[P <: HList, S <: HList, U](val pre: P, val suf: S, val up: Option[U]) {
     def get(implicit first: First[S]): first.Out = first(suf)
-    def left(implicit init: Init[P], last: Last[P]) = new Zipper(init(pre), HCons(last(pre), suf), up)
-    /* TODO: Want to apply more directly, currently need to write .right.apply */
-    def right(implicit tail: Tail[S], first: First[S]) = new Object {
-      def apply(implicit append: Append[P, first.Out]) = Zipper(append(pre, first(suf)), tail(suf), up)
-    }
+    def left(implicit tail: Tail[P], first: First[P]) = new Zipper(tail(pre), HCons(first(pre), suf), up)
+    def right(implicit tail: Tail[S], first: First[S]) = Zipper(first(suf) :: pre, tail(suf), up)
+    /* TODO: Want to apply directly, currently need to down .right.apply */
     def down(implicit first: First[S]) = new Object {
       def apply(implicit rep: RType[first.Out]) = Zipper(HNil, rep.toHList(first(suf)), Some(Zipper.this))
     }
