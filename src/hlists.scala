@@ -193,5 +193,74 @@ object HLists {
 
   def object2HList[T](t: T)(implicit rep: RType[T]): rep.HListType = rep.toHList(t)
   def zipper[T](t: T)(implicit rep: RType[T]) = Zipper[HNil, rep.HListType, Option[Nothing]](HNil, rep.toHList(t), None)
-}
 
+  /**
+   * Dangerous LIGD world.
+   *
+   * This produces fully working Rep instances for an RType instance above. It
+   * does not work implicitly, though; because of Scala limits on refering to
+   * a dependent type that is in the same list of parameters.
+   */
+  object ligd {
+    import LIGD._
+    import scala.language.reflectiveCalls
+
+    sealed trait ToNestedTuple2[T <: HList] {
+      type Out
+      val rep: Rep[Out]
+      def apply(t: T): Out
+    }
+
+    implicit def toNestedTuple2Nil = new ToNestedTuple2[HNil] {
+      type Out = Unit
+      val rep = LIGD.rep[Unit]
+      def apply(t: HNil) = ()
+    }
+    implicit def toNestedTuple2[A: Rep, B <: HList](implicit nb: ToNestedTuple2[B]) = new ToNestedTuple2[A :: B] {
+      type Out = (A, nb.Out)
+      val rep = LIGD.rep[(A, nb.Out)](RProd(LIGD.rep[A], nb.rep))
+      def apply(t: A :: B) = (t.car, nb(t.cdr))
+    }
+    sealed trait FromNestedTuple2[T] {
+      type Out <: HList
+      def apply(t: T): Out
+    }
+
+    implicit def fromNestedTuple2CutOff[A: Rep] = new FromNestedTuple2[(A, Unit)] {
+      type Out = A :: HNil
+      def apply(t: (A, Unit)) = t._1 :: HNil
+    }
+    implicit def fromNestedTuple2Pair[A: Rep, B: Rep](implicit nb: FromNestedTuple2[B]) = new FromNestedTuple2[(A, B)] {
+      type Out = A :: nb.Out
+      def apply(t: (A, B)) = t._1 :: nb(t._2)
+    }
+
+    implicit val RHNil = new LIGD.RType(
+      RUnit,
+      EP((nil: HNil) ⇒ (), (unit: Unit) ⇒ HNil)
+    )
+
+    /* A Rep that converts HLists to nested pairs */
+    implicit def RHList[A: Rep, B <: HList](implicit t: ToNestedTuple2[A :: B]) = new {
+      def apply(implicit f: FromNestedTuple2[t.Out]) = LIGD.RType(
+        t.rep,
+        EP((x: f.Out) ⇒ t(x.asInstanceOf[A :: B]),
+          (x: t.Out) ⇒ f(x))
+      )
+    }
+
+    /* A Rep that converts custom types to HLists */
+    def RepAnyWithList[T](implicit rt: HLists.RType[T]) = new {
+      def apply(implicit rl: LIGD.RType[_, rt.HListType]): Rep[T] = new LIGD.RType(rl,
+        EP(
+          (t: T) ⇒ rt.toHList(t),
+          (t: rt.HListType) ⇒ rt.fromHList(t)
+        )
+      )
+    }
+
+    val rl = RHList[Int, Int :: HNil].apply
+    val ra = RepAnyWithList[(Int, Int)]
+    val eq = LIGD.geq((1, 2), (1, 2))(ra.apply(rl))
+  } /* ligd */
+}
