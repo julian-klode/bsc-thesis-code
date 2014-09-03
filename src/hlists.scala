@@ -109,6 +109,36 @@ object HLists {
     override def apply(t: A :: B) = HCons(t.car, lb.apply(t.cdr))
   }
 
+  sealed trait ToNestedTuple[T <: HList] {
+    type Out
+    def apply(t: T): Out
+  }
+
+  implicit def toNestedTupleNil = new ToNestedTuple[HNil] {
+    type Out = Unit
+    def apply(t: HNil) = ()
+  }
+  implicit def toNestedTuple[A, B <: HList](implicit nb: ToNestedTuple[B]) = new ToNestedTuple[A :: B] {
+    type Out = (A, nb.Out)
+    def apply(t: A :: B) = (t.car, nb(t.cdr))
+  }
+
+  sealed trait FromNestedTuple[T] {
+    type Out <: HList
+    def apply(t: T): Out
+  }
+
+  implicit def fromNestedTupleCutOff[A] = new FromNestedTuple[(A, Unit)] {
+    type Out = A :: HNil
+    def apply(t: (A, Unit)) = t._1 :: HNil
+  }
+  implicit def fromNestedTuplePair[A, B](implicit nb: FromNestedTuple[B]) = new FromNestedTuple[(A, B)] {
+    type Out = A :: nb.Out
+    def apply(t: (A, B)) = t._1 :: nb(t._2)
+  }
+
+  def fromNestedTuple[A](a: A)(implicit fromNestedTuple: FromNestedTuple[A]) = fromNestedTuple(a)
+
   /**
    * Methods for the
    */
@@ -118,6 +148,7 @@ object HLists {
     def last(implicit last: Last[C]) = last(c)
     def tail(implicit tail: Tail[C]) = tail(c)
     def init(implicit init: Init[C]) = init(c)
+    def toNestedTuple(implicit toNestedTuple: ToNestedTuple[C]) = toNestedTuple(c)
     def append[V](v: V)(implicit append: Append[C, V]) = append(c, v)
   }
   implicit def op[C <: HList](c: C): HListMethods[C] = new HListMethods(c)
