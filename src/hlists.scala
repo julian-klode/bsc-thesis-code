@@ -39,11 +39,7 @@ object HLists {
     override def toString() = "HNil"
   }
 
-  /* I want to make HNil a trait, and have an object HNil extends HNil, but
-   * this makes other stuff complain about missing instances for
-   * Append[HNil.type, ...] so keep this for now
-   */
-  val HNil: HNil = new HNil {}
+  case object HNil extends HNil
 
   /** Define a nicer type alias */
   type ::[H, T <: HList] = HCons[H, T]
