@@ -26,10 +26,10 @@ import LIGD._
  *
  * This approach demonstrated here is class-based. For Haskell, a similar
  * approach can be used:
- *   1. Convert geq :: Rep[a] -> a -> a to
- *              geq_ :: Rep[a] -> a -> a -> (forall a. Rep[a] -> a -> a)
+ *   1. Convert geq :: Rep[a] -> a -> a -> Bool to
+ *              geq_ :: Rep[a] -> a -> a -> (forall a. Rep[a] -> a -> a -> Bool) -> Bool
  *      and change self-recursive calls to use the third parameter instead
- *   2. Add a geq :: Rep[a] -> a -> a where
+ *   2. Add a geq :: Rep[a] -> a -> a -> Bool where
  *      geq rep a b = geq_ rep a b geq
  *
  * This approach would work in Scala as well, but seems more complex at the
