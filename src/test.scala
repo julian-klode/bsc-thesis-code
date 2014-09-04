@@ -24,11 +24,29 @@ object Main {
 
   object incS extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
 
+  val manager = Employee(Person("Manager", "Manager Address"), Salary(420))
+  /* Generates count + count**2 salaries */
+  def mkComp(count: Int) = {
+    def mkUnits(unitCount: Int) = {
+      for (i ← 43 to unitCount + 42)
+        yield PU(Employee(Person("name", "address"), Salary(i * 10)))
+    }
+
+    def mkDept(depCount: Int) = {
+      for (i ← 43 to depCount + 42)
+        yield Dept("dept", manager, units = mkUnits(depCount).toList)
+    }
+    Company(mkDept(count).toList)
+  }
+
+  /* Will have 8 + 8 * 8 = 72 salaries */
+  val com1 = mkComp(8)
+  val incEverywhere = shapeless.everywhere(incS)
+
   def company(lib: L.Value) = lib match {
-    case L.None      ⇒ Some(expCom)
-    case L.Shapeless ⇒ Some(shapeless.everywhere(incS)(CompanyData.genCom))
-    case L.LIGD      ⇒ Some(LIGDCompany.incSalary(CompanyData.genCom, 10))
-    case L.EMGM      ⇒ Some(EMGMCompany.incSalary(CompanyData.genCom))
+    case L.Shapeless ⇒ Some(incEverywhere(com1))
+    case L.LIGD      ⇒ Some(LIGDCompany.incSalary(com1, 10))
+    case L.EMGM      ⇒ Some(EMGMCompany.incSalary(com1))
     case L.Direct ⇒ {
       def incSalary(c: Company) = Company(c.depts.map(incSalaryD))
       def incSalaryD(d: Dept) = Dept(d.name, incSalaryE(d.manager), d.units.map(incSalaryU))
@@ -39,7 +57,19 @@ object Main {
       def incSalaryE(e: Employee) = Employee(e.person, incSalaryS(e.salary))
       def incSalaryS(s: Salary) = Salary(s.salary * 110 / 100)
 
-      Some(incSalary(genCom))
+      Some(incSalary(com1))
+    }
+    case L.None ⇒ {
+      def incSalary(c: Company) = Company(c.depts.map(incSalaryD))
+      def incSalaryD(d: Dept) = Dept(d.name, incSalaryE(d.manager), d.units.map(incSalaryU))
+      def incSalaryU(du: DUnit): DUnit = du match {
+        case DU(d) ⇒ DU(incSalaryD(d))
+        case PU(p) ⇒ PU(incSalaryE(p))
+      }
+      def incSalaryE(e: Employee) = Employee(e.person, incSalaryS(e.salary))
+      def incSalaryS(s: Salary) = Salary(s.salary * 110 / 100)
+
+      Some(incSalary(com1))
     }
     case _ ⇒ None
   }
@@ -104,7 +134,6 @@ object Main {
   )
 
   def main(args: Array[String]) {
-    assert(company(L.Direct).get == expCom)
     printf("\\begin{tabular}{c")
     for (lib ← tests) {
       printf("|r")
