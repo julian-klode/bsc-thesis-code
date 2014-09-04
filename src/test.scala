@@ -44,28 +44,31 @@ object Main {
     case _ ⇒ None
   }
 
+  val list1 = (1 until 128).toList
+  val list2 = (1 until 129).toList
+
   def geq(lib: L.Value) = lib match {
     case L.None   ⇒ Some(false)
-    case L.Direct ⇒ Some(List(1, 2, 3, 4, 5).equals(List(1, 2, 3, 4, 5, 6)))
-    case L.LIGD   ⇒ Some(LIGD.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
-    case L.EMGM   ⇒ Some(EMGM.geq(List(1, 2, 3, 4, 5), List(1, 2, 3, 4, 5, 6)))
+    case L.Direct ⇒ Some(list1.equals(list2))
+    case L.LIGD   ⇒ Some(LIGD.geq(list1, list2))
+    case L.EMGM   ⇒ Some(EMGM.geq(list1, list2))
     case _        ⇒ None
   }
 
   def min(lib: L.Value) = lib match {
     case L.None      ⇒ Some(1)
-    case L.LIGD      ⇒ Some(LIGD.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
-    case L.EMGM      ⇒ Some(EMGM.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
-    case L.Direct    ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(Int.MaxValue)(scala.math.min))
-    case L.Shapeless ⇒ Some(ShapelessFun.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case L.LIGD      ⇒ Some(LIGD.min(list2))
+    case L.EMGM      ⇒ Some(EMGM.min(list2))
+    case L.Direct    ⇒ Some(list2.foldLeft(Int.MaxValue)(scala.math.min))
+    case L.Shapeless ⇒ Some(ShapelessFun.min(list2))
     case _           ⇒ None
   }
   def sum(lib: L.Value) = lib match {
-    case L.None      ⇒ Some(72)
-    case L.Direct    ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(_ + _))
-    case L.LIGD      ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(_ + _))
-    case L.EMGM      ⇒ Some(EMGM.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
-    case L.Shapeless ⇒ Some(ShapelessFun.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case L.None      ⇒ Some(list2.foldLeft(0)(_ + _))
+    case L.Direct    ⇒ Some(list2.foldLeft(0)(_ + _))
+    case L.LIGD      ⇒ Some(LIGD.foldl(list2)(0)(_ + _))
+    case L.EMGM      ⇒ Some(EMGM.sum(list2))
+    case L.Shapeless ⇒ Some(ShapelessFun.sum(list2))
     case _           ⇒ None
   }
 
@@ -75,7 +78,7 @@ object Main {
   }
 
   def time[A](a: ⇒ A) = {
-    val n = 300000
+    val n = 30000
     /* JIT compile */
     for (_ ← 1 to n) {
       val res = a
