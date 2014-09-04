@@ -57,6 +57,7 @@ object Main {
     case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(Int.MaxValue)(scala.math.min))
     case L.EMGM   ⇒ Some(EMGM.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(Int.MaxValue)(scala.math.min))
+    case L.Shapeless   ⇒ Some(ShapelessFun.min(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
     case _        ⇒ None
   }
   def sum(lib: L.Value) = lib match {
@@ -64,6 +65,7 @@ object Main {
     case L.Direct ⇒ Some(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11).foldLeft(0)(_ + _))
     case L.LIGD   ⇒ Some(LIGD.foldl(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11))(0)(_ + _))
     case L.EMGM   ⇒ Some(EMGM.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
+    case L.Shapeless   ⇒ Some(ShapelessFun.sum(List(4, 6, 3, 1, 2, 9, 8, 7, 6, 5, 10, 11)))
     case _        ⇒ None
   }
 
