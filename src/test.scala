@@ -118,7 +118,7 @@ object Main {
       val res = a
     }
     val result = (System.nanoTime - time) / n
-    ("%d ns".format(result))
+    ("%.1f μs".format(result / 1000.0))
   }
 
   object L extends Enumeration {
