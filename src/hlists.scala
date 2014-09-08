@@ -20,7 +20,7 @@
  * An implementation of HLists and zippers.
  *
  * For now, stick to HLists and zippers only. It might make sense to combine
- * this with LIGD though, and use HLists to view constructors in RType
+ * this with LIGD though, and use HLists to view constructors in RHListIso
  * instances rather than tuples. It should be possible to do this, although
  * I have not taken a look at that yet.
  */
@@ -156,7 +156,7 @@ object HLists {
   /**
    * Implementation of a zipper for HLists
    *
-   * As long as your type has an RType (can be represented as an HList), you
+   * As long as your type has an RHListIso (can be represented as an HList), you
    * can use it here.
    */
   case class Zipper[P <: HList, S <: HList, U](val pre: P, val suf: S, val up: Option[U]) {
@@ -165,7 +165,7 @@ object HLists {
     def right(implicit tail: Tail[S], first: First[S]) = Zipper(first(suf) :: pre, tail(suf), up)
     /* TODO: Want to apply directly, currently need to down .right.apply */
     def down(implicit first: First[S]) = new Object {
-      def apply(implicit rep: RType[first.Out]) = Zipper(HNil, rep.toHList(first(suf)), Some(Zipper.this))
+      def apply(implicit rep: RHListIso[first.Out]) = Zipper(HNil, rep.toHList(first(suf)), Some(Zipper.this))
     }
   }
 
@@ -173,7 +173,7 @@ object HLists {
 
   import HLists._
 
-  trait RType[T] {
+  trait RHListIso[T] {
     type HListType <: HList
 
     def toHList: T ⇒ HListType
@@ -183,7 +183,7 @@ object HLists {
   /**
    * Example: Represent a tuple as an HList
    */
-  case class RTuple[A, B]() extends RType[(A, B)] {
+  case class RTuple[A, B]() extends RHListIso[(A, B)] {
     override type HListType = A :: B :: HNil
     override def toHList = t ⇒ t._1 :: t._2 :: HNil
     override def fromHList = t ⇒ (t.car, t.cdr.car)
@@ -191,13 +191,13 @@ object HLists {
 
   implicit def rTuple[A, B] = RTuple[A, B]
 
-  def object2HList[T](t: T)(implicit rep: RType[T]): rep.HListType = rep.toHList(t)
-  def zipper[T](t: T)(implicit rep: RType[T]) = Zipper[HNil, rep.HListType, Option[Nothing]](HNil, rep.toHList(t), None)
+  def object2HList[T](t: T)(implicit rep: RHListIso[T]): rep.HListType = rep.toHList(t)
+  def zipper[T](t: T)(implicit rep: RHListIso[T]) = Zipper[HNil, rep.HListType, Option[Nothing]](HNil, rep.toHList(t), None)
 
   /**
    * Dangerous LIGD world.
    *
-   * This produces fully working Rep instances for an RType instance above. It
+   * This produces fully working Rep instances for an RHListIso instance above. It
    * does not work implicitly, though; because of Scala limits on refering to
    * a dependent type that is in the same list of parameters.
    */
@@ -250,7 +250,7 @@ object HLists {
     }
 
     /* A Rep that converts custom types to HLists */
-    def RepAnyWithList[T](implicit rt: HLists.RType[T]) = new {
+    def RepAnyWithList[T](implicit rt: HLists.RHListIso[T]) = new {
       def apply(implicit rl: LIGD.RType[_, rt.HListType]): Rep[T] = new LIGD.RType(rl,
         EP(
           (t: T) ⇒ rt.toHList(t),
