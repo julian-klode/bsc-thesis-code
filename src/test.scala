@@ -19,6 +19,7 @@
 object Main {
   import CompanyData._
   import LIGDCompany._
+  import HLIGDCompany._
   import EMGMCompany._
   import shapeless.poly._
 
@@ -45,7 +46,8 @@ object Main {
 
   def company(lib: L.Value) = lib match {
     case L.Shapeless ⇒ Some(incEverywhere(com1))
-    case L.LIGD      ⇒ Some(LIGDCompany.incSalary(com1, 10))
+    case L.LIGD      ⇒ Some(LIGDCompany.incSalary(com1, 10)(LIGDCompany.rCompany))
+    case L.HLIGD     ⇒ Some(HLIGDCompany.incSalary(com1, 10)(HLIGDCompany.rCompany))
     case L.EMGM      ⇒ Some(EMGMCompany.incSalary(com1))
     case L.Direct ⇒ {
       def incSalary(c: Company) = Company(c.depts.map(incSalaryD))
@@ -81,6 +83,7 @@ object Main {
     case L.None   ⇒ Some(false)
     case L.Direct ⇒ Some(list1.equals(list2))
     case L.LIGD   ⇒ Some(LIGD.geq(list1, list2))
+    case L.HLIGD  ⇒ Some(HLIGD.geq(list1, list2))
     case L.EMGM   ⇒ Some(EMGM.geq(list1, list2))
     case _        ⇒ None
   }
@@ -123,7 +126,7 @@ object Main {
 
   object L extends Enumeration {
     type L = Value
-    val Direct, None, Shapeless, LIGD, EMGM = Value
+    val Direct, None, Shapeless, LIGD, HLIGD, EMGM = Value
   }
 
   val tests = List(
