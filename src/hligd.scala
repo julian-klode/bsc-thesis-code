@@ -103,4 +103,28 @@ object HLIGD {
   }
   implicit def rList[A: Rep]: Rep[List[A]] = RList(rep[A])
   def rep[T: Rep] = implicitly[Rep[T]]
+
+  /* ====================================================================
+   *         EXAMPLE: Zipper
+   * ====================================================================
+   */
+  /**
+   * Implementation of a zipper for HLists
+   *
+   * As long as your type has an RType (can be represented as an HList), you
+   * can use it here.
+   */
+  case class Zipper[P <: HList, S <: HList, U](val pre: P, val suf: S, val up: Option[U]) {
+    def get(implicit first: First[S]): first.Out = first(suf)
+    def left(implicit tail: Tail[P], first: First[P]) = new Zipper(tail(pre), HCons(first(pre), suf), up)
+    def right(implicit tail: Tail[S], first: First[S]) = Zipper(first(suf) :: pre, tail(suf), up)
+    /* TODO: Want to apply directly, currently need to down .right.apply */
+    def down(implicit first: First[S]) = new Object {
+      def apply(implicit rep: RType[_ <: HList, first.Out]) = Zipper(HNil, rep.b.from(first(suf)), Some(Zipper.this))
+    }
+  }
+
+  def zipper[L <: HList](l: L) = Zipper(HNil, l, None)
+  def zipper[L <: HList, O](o: O)(implicit rep: RType[L, O]) = Zipper(HNil, rep.b.from(o), None)
+
 }
