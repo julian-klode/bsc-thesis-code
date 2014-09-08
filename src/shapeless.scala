@@ -40,10 +40,6 @@ object ShapelessFun {
     implicit def caseInt = at[Int](s ⇒ s)
     implicit def default[T] = at[T](_ ⇒ 0)
   }
-  object intmax extends Poly1 {
-    implicit def caseInt = at[Int](s ⇒ s)
-    implicit def default[T] = at[T](_ ⇒ Int.MaxValue)
-  }
 
   object plus extends Poly2 {
     implicit val caseInt = at[Int, Int](_ + _)
@@ -59,18 +55,23 @@ object ShapelessFun {
     implicit val caseFloat = at[Float, Float](_ * _)
     implicit val caseDouble = at[Double, Double](_ * _)
   }
+
+  object intmax extends Poly1 {
+    implicit def caseInt = at[Int](s ⇒ s)
+    implicit def default[T] = at[T](_ ⇒ Int.MaxValue)
+  }
   object minimum extends Poly2 {
     implicit val caseInt = at[Int, Int](scala.math.min)
     implicit val caseLong = at[Long, Long](scala.math.min)
     implicit val caseFloat = at[Float, Float](scala.math.min)
     implicit val caseDouble = at[Double, Double](scala.math.min)
   }
+  val min = everything(intmax)(minimum)
 
   val salaries = everything(salary)(plus)
   val ints = everything(queryInt)(plus)
   val product = everything(int1)(prod)
   val sum = everything(int0)(plus)
-  val min = everything(intmax)(minimum)
 
   /* Example: sumSalary */
   object extractSalary extends Poly1 {
