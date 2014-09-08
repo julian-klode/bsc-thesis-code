@@ -71,4 +71,15 @@ object ShapelessFun {
   val product = everything(int1)(prod)
   val sum = everything(int0)(plus)
   val min = everything(intmax)(minimum)
+
+  /* Example: sumSalary */
+  object extractSalary extends Poly1 {
+    implicit def caseSalary = at[Salary](s ⇒ s.salary)
+    implicit def default[T] = at[T](_ ⇒ 0.0F)
+  }
+  object addFloat extends Poly2 {
+    implicit val caseFloat = at[Float, Float](_ + _)
+  }
+
+  val sumSalary = everything(extractSalary)(addFloat)
 }
