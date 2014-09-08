@@ -39,8 +39,8 @@ object HLIGD {
     case (RSum(ra, rb), Right(b1), Right(b2)) ⇒ geq(b1, b2)(rb)
     case (RSum(_, _), _, _)                   ⇒ false
     case (RHNil, _, _)                        ⇒ true
-    case (RSeq(rx), xs, ys)                   ⇒ xs.length == ys.length
-        && !xs.zip(ys).exists((ab) ⇒ !geq(ab._1, ab._2)(rx))
+    case (RSeq(rx), xs, ys) ⇒ xs.length == ys.length &&
+      !xs.zip(ys).exists((ab) ⇒ !geq(ab._1, ab._2)(rx))
     case (RProd(ra, rb), HCons(a1, b1), HCons(a2, b2)) ⇒
       geq(a1, a2)(ra) && geq(b1, b2)(rb)
     case (r: RType[_, A], t1, t2) ⇒ geq(r.b.from(t1), r.b.from(t2))(r.a)
