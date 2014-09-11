@@ -75,11 +75,24 @@ object EMGMCompany {
   }
 
   /* The incSalary function */
-  implicit object MyGTransformSalary extends MyGTransform
-      with GenericCompany[GTransform] with MyGTransformList {
-    override def salary = GTransform(x ⇒ Salary(x.salary * 110 / 100))
+  case class GSalary[A](transform: A ⇒ A)
+  implicit object MyGSalary extends GenericCompany[GSalary] {
+    override def salary = GSalary(x ⇒ Salary(x.salary * 110 / 100))
+    override def unit = GSalary(x ⇒ x)
+    override def plus[A, B] = a ⇒ b ⇒ GSalary(x ⇒ x match {
+      case (Left(x))  ⇒ Left(a.transform(x))
+      case (Right(x)) ⇒ Right(b.transform(x))
+    })
+
+    override def prod[A, B] = a ⇒ b ⇒ GSalary(x ⇒ (a.transform(x._1),
+      b.transform(x._2)))
+    override def char = GSalary(x ⇒ x)
+    override def int = GSalary(x ⇒ x)
+    override def float = GSalary(x ⇒ x)
+    override def string = GSalary(x ⇒ x)
+    override def view[A, B] = iso ⇒ a ⇒ GSalary(x ⇒ iso.to(a.transform(iso.from(x))))
   }
-  def incSalary[T](a: T)(implicit r: GRep[GTransform, T]): T =
+  def incSalary[T](a: T)(implicit r: GRep[GSalary, T]): T =
     r.grep.transform(a)
 
   /* Calculation of a sum */
