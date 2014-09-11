@@ -269,6 +269,7 @@ trait EMGM_sec_1_5 extends EMGM {
   def geqList[T](a: T, b: T)(implicit r: GRep[GEq, T]): Boolean =
     r.grep.geq(a)(b)
 
+  /* Add some user data member and you can abstract a pattern with this */
   case class GTransform[A](transform: A ⇒ A)
   trait MyGTransform extends Generic[GTransform] {
     override def unit = GTransform(x ⇒ x)
