@@ -27,7 +27,6 @@ object Main {
 
   val N = 256
 
-
   object incS extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
 
   val manager = Employee(Person("Manager", "Manager Address"), Salary(0))
