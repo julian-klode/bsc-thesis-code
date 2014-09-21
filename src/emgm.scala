@@ -17,6 +17,7 @@
  */
 
 import scala.language.higherKinds
+import scala.language.reflectiveCalls
 
 /**
  * Implementation of (Extensible and Modular) Generics for the Masses
@@ -344,6 +345,22 @@ trait EMGM_sec_1_5 extends EMGM {
   // demonstrating EMGM as a solution to the "expression problem"
   // would be interesting. see Oliveira, Hinze & Loeh, sec. 1.6.1
 
+  /*
+   * Higher-order functions:
+   *
+   * The thing is: We would not actually need to do this, we could simply use
+   * the GRep directly instead. But in practice, the method names are different
+   * in each GRep, and the wrapper functions might actually have some extra
+   * arguments they pass to those methods, like min does with Int.MaxValue.
+   *
+   * If we make the wrapper functions objects conforming to this type, things
+   * work just fine
+   */
+  type Returning[F[_], R] = {
+    def apply[C](a: C)(implicit r: GRep[F, C]): R
+  }
+
+  def apply[F[_],C,R](fun: Returning[F, R])(c: C)(implicit r: GRep[F, C]): R = fun(c)
 }
 
 object EMGM extends EMGM with EMGM_sec_1_5
