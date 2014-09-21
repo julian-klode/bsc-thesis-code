@@ -41,7 +41,7 @@ object Main {
   }
 
   /* Will have 8 + 8 * 8 = 72 salaries */
-  val com1 = mkComp(8)
+  val com1 = mkComp(256)
   val incEverywhere = shapeless.everywhere(incS)
 
   def company(lib: L.Value) = lib match {
@@ -76,8 +76,8 @@ object Main {
     case _ ⇒ None
   }
 
-  val list1 = (1 until 128).toList
-  val list2 = (1 until 129).toList
+  val list1 = (1 until 4096).toList
+  val list2 = (1 until 4096 + 1).toList
 
   def geq(lib: L.Value) = lib match {
     case L.None   ⇒ Some(false)
@@ -111,17 +111,23 @@ object Main {
   }
 
   def time[A](a: ⇒ A) = {
-    val n = 30000
+    val n = 30
     /* JIT compile */
     for (_ ← 1 to n) {
       val res = a
     }
+    System.gc()
+    System.gc()
+    System.gc()
     var time: Long = System.nanoTime
     for (_ ← 1 to n) {
       val res = a
     }
     val result = (System.nanoTime - time) / n
-    ("%.1f μs".format(result / 1000.0))
+    if (result >= 1000 * 1000)
+      ("%.1f ms".format(result / 1000.0 / 1000.0))
+    else
+      ("%.1f μs".format(result / 1000.0))
   }
 
   object L extends Enumeration {
