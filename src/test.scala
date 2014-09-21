@@ -30,16 +30,16 @@ object Main {
 
   object incS extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
 
-  val manager = Employee(Person("Manager", "Manager Address"), Salary(420))
+  val manager = Employee(Person("Manager", "Manager Address"), Salary(0))
   /* Generates count + count**2 salaries */
   def mkComp(count: Int) = {
     def mkUnits(unitCount: Int) = {
-      for (i ← 43 to unitCount + 42)
+      for (i ← 1 to unitCount)
         yield PU(Employee(Person("name", "address"), Salary(i * 10)))
     }
 
     def mkDept(depCount: Int) = {
-      for (i ← 43 to depCount + 42)
+      for (i ← 1 to depCount)
         yield Dept("dept", manager, units = mkUnits(depCount).toList)
     }
     Company(mkDept(count).toList)
