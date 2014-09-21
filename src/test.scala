@@ -114,7 +114,7 @@ object Main {
 
   /* Benchmark configuration */
   val scalameterConfig = config(
-    Key.exec.benchRuns -> 30,
+    Key.exec.benchRuns -> 150,
     Key.verbose -> false
   ) withWarmer {
       new Warmer.Default
