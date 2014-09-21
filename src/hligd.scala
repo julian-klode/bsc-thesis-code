@@ -127,4 +127,30 @@ object HLIGD {
   def zipper[L <: HList](l: L) = Zipper(HNil, l, None)
   def zipper[L <: HList, O](o: O)(implicit rep: RType[L, O]) = Zipper(HNil, rep.b.from(o), None)
 
+  /**
+   * Usage: gfoldl(fun: (A, N) => A)(unit: A)(container: C)
+   *
+   * A simple left fold over some container. The function needs to have both
+   * argument types annotated, otherwise Scala won't be able to infer the
+   * representation of N.
+   *
+   * Type notes: A means accumulator, C means container, N means needle
+   *
+   */
+  def gfoldl[A, C: Rep, N: Rep](fun: (A, N) ⇒ A)(unit: A)(c: C): A = (rep[C], c) match {
+    case (r, v) if r == rep[N]          ⇒ fun(unit, v.asInstanceOf[N])
+    case (RSum(ra, rb), Left(x))        ⇒ gfoldl(fun)(unit)(x)(ra, rep[N])
+    case (RSum(ra, rb), Right(x))       ⇒ gfoldl(fun)(unit)(x)(rb, rep[N])
+    /* We have a sequence where element type is what we want. Use foldLeft */
+    case (RSeq(ra), as) if ra == rep[N] ⇒ as.asInstanceOf[Seq[N]].foldLeft(unit)(fun)
+    /* We have another sequence, fold manually */
+    case (RSeq(ra), as)                 ⇒ as.foldLeft(unit)(gfoldl(fun)(_)(_)(ra, rep[N]))
+    case (RProd(ra, rb), HCons(x, y))   ⇒ gfoldl(fun)(gfoldl(fun)(unit)(x)(ra, rep[N]))(y)(rb, rep[N])
+    case (r: RType[_, C], t1)           ⇒ gfoldl(fun)(unit)(r.b.from(t1))(r.a, rep[N])
+    case _                              ⇒ unit
+  }
+
+  /** Simple foldl, like scala's foldLeft */
+  def foldl[A, C[_], N](c: C[N])(unit: A)(fun: (A, N) ⇒ A)(implicit rep: Rep[C[N]], rn: Rep[N]): A = gfoldl(fun)(unit)(c)
+
 }
