@@ -93,6 +93,7 @@ object Main {
   def min(lib: L.Value) = lib match {
     case L.None      ⇒ Some(1)
     case L.LIGD      ⇒ Some(LIGD.min(list2))
+    case L.HLIGD     ⇒ Some(HLIGD.foldl(list2)(Int.MaxValue)(scala.math.min))
     case L.EMGM      ⇒ Some(EMGM.min(list2))
     case L.Direct    ⇒ Some(list2.foldLeft(Int.MaxValue)(scala.math.min))
     case L.Shapeless ⇒ Some(ShapelessFun.min(list2))
@@ -102,6 +103,7 @@ object Main {
     case L.None      ⇒ Some(list2.foldLeft(0)(_ + _))
     case L.Direct    ⇒ Some(list2.foldLeft(0)(_ + _))
     case L.LIGD      ⇒ Some(LIGD.foldl(list2)(0)(_ + _))
+    case L.HLIGD     ⇒ Some(HLIGD.foldl(list2)(0)(_ + _))
     case L.EMGM      ⇒ Some(EMGM.sum(list2))
     case L.Shapeless ⇒ Some(ShapelessFun.sum(list2))
     case _           ⇒ None
