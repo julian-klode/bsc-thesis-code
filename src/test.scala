@@ -25,6 +25,9 @@ object Main {
   import EMGMCompany._
   import shapeless.poly._
 
+  val N = 256
+
+
   object incS extends ->((i: Salary) ⇒ Salary(i.salary * 1.1F))
 
   val manager = Employee(Person("Manager", "Manager Address"), Salary(420))
@@ -42,8 +45,8 @@ object Main {
     Company(mkDept(count).toList)
   }
 
-  /* Will have 8 + 8 * 8 = 72 salaries */
-  val com1 = mkComp(256)
+  /* Will have N * N + N salaries */
+  val com1 = mkComp(N)
   val incEverywhere = shapeless.everywhere(incS)
 
   def company(lib: L.Value) = lib match {
@@ -78,8 +81,8 @@ object Main {
     case _ ⇒ None
   }
 
-  val list1 = (1 until 256 * 256).toList
-  val list2 = (1 until 256 * 256 + 1).toList
+  val list1 = (1 until N * N).toList
+  val list2 = (1 until N * N + 1).toList
 
   def geq(lib: L.Value) = lib match {
     case L.None   ⇒ Some(false)
