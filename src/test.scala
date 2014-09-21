@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+import org.scalameter._
+
 object Main {
   import CompanyData._
   import LIGDCompany._
@@ -76,8 +78,8 @@ object Main {
     case _ ⇒ None
   }
 
-  val list1 = (1 until 4096).toList
-  val list2 = (1 until 4096 + 1).toList
+  val list1 = (1 until 256 * 256).toList
+  val list2 = (1 until 256 * 256 + 1).toList
 
   def geq(lib: L.Value) = lib match {
     case L.None   ⇒ Some(false)
@@ -110,24 +112,25 @@ object Main {
     case None    ⇒ printf(" & %15s", "N/A")
   }
 
+  /* Benchmark configuration */
+  val scalameterConfig = config(
+    Key.exec.benchRuns -> 30,
+    Key.verbose -> false
+  ) withWarmer {
+      new Warmer.Default
+    } withMeasurer {
+      new Measurer.IgnoringGC with Measurer.OutlierElimination
+    }
+
   def time[A](a: ⇒ A) = {
-    val n = 30
-    /* JIT compile */
-    for (_ ← 1 to n) {
-      val res = a
-    }
+    /* This reduces the GC runs during scalameter benchmarking slightly */
     System.gc()
     System.gc()
-    System.gc()
-    var time: Long = System.nanoTime
-    for (_ ← 1 to n) {
-      val res = a
-    }
-    val result = (System.nanoTime - time) / n
-    if (result >= 1000 * 1000)
-      ("%.1f ms".format(result / 1000.0 / 1000.0))
+    val result = scalameterConfig measure { a }
+    if (result >= 1)
+      ("%.1f ms".format(result))
     else
-      ("%.1f μs".format(result / 1000.0))
+      ("%.1f μs".format(result * 1000.0))
   }
 
   object L extends Enumeration {

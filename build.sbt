@@ -33,6 +33,7 @@ initialCommands := Seq(
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.0",
+  "com.storm-enroute" %% "scalameter-core" % "0.6",
   "com.chuusai" % "shapeless" % "2.0.0" cross  CrossVersion.fullMapped {
     case "2.10.4" => "2.10.4"
     case "2.11.1" => "2.11"
