@@ -40,3 +40,9 @@ libraryDependencies ++= Seq(
     case "2.11.2" => "2.11"
   }
 )
+
+fork := true
+
+javaOptions += "-Xss64m"
+
+outputStrategy := Some(StdoutOutput)
