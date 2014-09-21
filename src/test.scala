@@ -108,8 +108,8 @@ object Main {
   }
 
   def bench[A](lib: String, test: String, code: ⇒ Option[A]) = code match {
-    case Some(_) ⇒ printf(" & %15s", time(code))
-    case None    ⇒ printf(" & %15s", "N/A")
+    case Some(_) ⇒ " & %15s".format(time(code))
+    case None    ⇒ " & %15s".format("N/A")
   }
 
   /* Benchmark configuration */
@@ -159,15 +159,16 @@ object Main {
     println("\\hline")
     for (lib ← L.values) {
       if (lib != L.None) {
-        printf("%-10s", lib.toString())
+        var line = "%-10s".format(lib.toString())
         for ((testname, test) ← tests) {
           test(lib) match {
             case Some(result) ⇒ assert(result == test(L.None).get, s"${lib.toString}: $testname failed. Expected ${test(L.None)}, received ${test(lib)}")
             case None         ⇒ true
           }
 
-          bench(lib.toString(), testname, test(lib))
+          line += bench(lib.toString(), testname, test(lib))
         }
+        print(line)
         println("\\\\")
       }
     }
