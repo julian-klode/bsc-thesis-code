@@ -360,7 +360,7 @@ trait EMGM_sec_1_5 extends EMGM {
     def apply[C](a: C)(implicit r: GRep[F, C]): R
   }
 
-  def apply[F[_],C,R](fun: Returning[F, R])(c: C)(implicit r: GRep[F, C]): R = fun(c)
+  def apply[F[_], C, R](fun: Returning[F, R])(c: C)(implicit r: GRep[F, C]): R = fun(c)
 }
 
 object EMGM extends EMGM with EMGM_sec_1_5
