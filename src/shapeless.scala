@@ -62,8 +62,6 @@ object ShapelessFun {
   }
   object minimum extends Poly2 {
     implicit val caseInt = at[Int, Int](scala.math.min)
-    implicit val caseLong = at[Long, Long](scala.math.min)
-    implicit val caseFloat = at[Float, Float](scala.math.min)
     implicit val caseDouble = at[Double, Double](scala.math.min)
   }
   val min = everything(intmax)(minimum)
